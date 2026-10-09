@@ -13,3 +13,9 @@ La sesión de Go se guarda en almacenamiento seguro. Las solicitudes concurrente
 No se usa Firestore, Firebase Storage, Gemini, Google Maps, GPay ni Functions de Firebase. Los eventos se retiraron. Los enlaces compartidos usan `https://panel.harkai.lat/incidents/{id}`.
 
 El APK debug es para revisión; la publicación exige configurar `android/key.properties`, la clave de firma definitiva y sus huellas en el proyecto de acceso. FCM requiere completar el circuito de dispositivos y entrega desde Go antes de considerarlo operativo. Actualidad es el flujo de reportes comunitarios hasta conectar una fuente editorial, y falta completar la traducción inglesa.
+
+## Notificaciones Android
+
+Mi cuenta permite registrar una zona con GPS en primer plano y consentimiento de notificaciones. Go decide los destinatarios y FCM entrega avisos genéricos; al abrirlos se consulta el reporte actual, incluida su conversación. No hay seguimiento de ubicación en segundo plano. El registro se liga a la sesión Go y deja de ser elegible al cerrar sesión.
+
+El token y la zona se restauran solo para la cuenta que los activó, con almacenamiento seguro. Firebase Messaging permanece sin auto-init por defecto; la app lo activa al registrar el dispositivo. La credencial privada de envío va exclusivamente en Dokploy para el backend; google-services.json sigue fuera de Git. El botón depende de push_notifications en /v1/meta. La recepción en un teléfono real queda pendiente de prueba por el propietario.

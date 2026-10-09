@@ -3,6 +3,7 @@ import '../../core/app_scope.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets.dart';
 import '../reports/report_browser.dart';
+import '../reports/report_detail.dart';
 import '../reports/create_report.dart';
 import '../auth/login_screen.dart';
 import '../account/profile_screen.dart';
@@ -82,6 +83,18 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final account = app.account;
+    final pending = app.pendingReport;
+    if (pending != null && account != null && !app.loading) {
+      app.pendingReport = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && AppScope.of(context).account?.id == account.id) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => ReportDetail(id: pending)),
+          );
+        }
+      });
+    }
     return Scaffold(
       key: scaffold,
       drawer: AppDrawer(

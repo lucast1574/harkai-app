@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_scope.dart';
+import '../notifications/notification_settings.dart';
 import '../../core/models.dart';
 import '../../shared/widgets.dart';
 
@@ -181,6 +182,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
+        if (user != null) NotificationSettings(key: ValueKey(user.id)),
       ],
     );
   }
