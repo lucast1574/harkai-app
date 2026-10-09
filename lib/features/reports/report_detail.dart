@@ -7,6 +7,7 @@ import '../../shared/widgets.dart';
 import '../map/community_map.dart';
 import '../auth/login_screen.dart';
 import 'report_repository.dart';
+import '../community/report_comments.dart';
 
 class ReportDetail extends StatefulWidget {
   final String id;
@@ -188,6 +189,10 @@ class _ReportDetailState extends State<ReportDetail> {
                   onPressed: busy ? null : resolve,
                   child: const Text('Marcar como resuelto'),
                 ),
+              ReportComments(
+                key: ValueKey('${i.id}:${app.account?.id ?? 'guest'}'),
+                incidentId: i.id,
+              ),
             ],
             if (error != null) MessageCard(error!, error: true, onRetry: load),
             if (busy) const Center(child: CircularProgressIndicator()),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_scope.dart';
 import '../../core/models.dart';
 import '../../shared/widgets.dart';
@@ -160,6 +161,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     FilledButton(
                       onPressed: busy ? null : save,
                       child: Text(busy ? 'Guardando…' : 'Guardar cambios'),
+                    ),
+                    TextButton(
+                      onPressed: () => launchUrl(
+                        Uri.parse('https://harkai.lat/privacidad/'),
+                        mode: LaunchMode.externalApplication,
+                      ),
+                      child: const Text('Política de privacidad'),
+                    ),
+                    TextButton(
+                      onPressed: () => launchUrl(
+                        Uri.parse('https://harkai.lat/eliminar-cuenta/'),
+                        mode: LaunchMode.externalApplication,
+                      ),
+                      child: const Text('Solicitar eliminación de cuenta'),
                     ),
                   ],
                 ),
