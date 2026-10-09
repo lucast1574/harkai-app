@@ -8,11 +8,17 @@ class ShareIncidentModal extends StatelessWidget {
 
   const ShareIncidentModal({super.key, required this.incidentId});
 
-  void _shareIncident(BuildContext context) {
+  Future<ShareResult> _shareIncident() {
     // Generamos el link con el ID real
-    final String url = 'https://harkai-b2b-nu.vercel.app/incidents/$incidentId';
-    Share.share(
-        '¡Alerta de seguridad en Harkai! He reportado un incidente. Ver detalles aquí: $url');
+    final String url = Uri(
+      scheme: 'https',
+      host: 'panel.harkai.lat',
+      pathSegments: ['incidents', incidentId],
+    ).toString();
+    return SharePlus.instance.share(ShareParams(
+      text:
+          'Reporte comunitario en Harkai. Revisa su estado y los detalles aquí: $url',
+    ));
   }
 
   @override
@@ -31,7 +37,7 @@ class ShareIncidentModal extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
+                color: Colors.green.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.check_circle_outline,
@@ -56,7 +62,7 @@ class ShareIncidentModal extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => _shareIncident(context),
+                onPressed: () => _shareIncident(),
                 icon: const Icon(Icons.share, color: Colors.white),
                 label: const Text("Compartir reporte",
                     style: TextStyle(
