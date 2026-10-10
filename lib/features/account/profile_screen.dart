@@ -107,6 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text('Rol: ${user.role}'),
                     const SizedBox(height: 22),
                     DropdownButtonFormField<String>(
+                      borderRadius: BorderRadius.circular(16),
                       initialValue: notifications,
                       decoration: const InputDecoration(
                         labelText: 'Qué alertas consultar',
@@ -140,6 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       },
                     ),
                     DropdownButtonFormField<String>(
+                      borderRadius: BorderRadius.circular(16),
                       initialValue: theme,
                       decoration: const InputDecoration(labelText: 'Tema'),
                       items: const [

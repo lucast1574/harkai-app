@@ -3,16 +3,19 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/models.dart';
+import '../help/support_place.dart';
 
 class CommunityMap extends StatelessWidget {
   final LatLng center;
   final List<Incident> incidents;
+  final List<SupportPlace> supportPlaces;
   final ValueChanged<Incident>? onReport;
   final ValueChanged<LatLng>? onPoint;
   const CommunityMap({
     super.key,
     required this.center,
     this.incidents = const [],
+    this.supportPlaces = const [],
     this.onReport,
     this.onPoint,
   });
@@ -47,6 +50,29 @@ class CommunityMap extends StatelessWidget {
                   size: 40,
                 ),
               ),
+            ...supportPlaces.map(
+              (p) => Marker(
+                point: LatLng(p.latitude, p.longitude),
+                width: 44,
+                height: 44,
+                child: IconButton(
+                  tooltip: p.name,
+                  icon: const Icon(
+                    Icons.local_hospital,
+                    color: Color(0xff245b9b),
+                  ),
+                  onPressed: () => showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (_) => SafeArea(
+                      child: SingleChildScrollView(
+                        child: SupportPlaceDetails(place: p),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             ...incidents.map(
               (i) => Marker(
                 point: LatLng(i.latitude, i.longitude),

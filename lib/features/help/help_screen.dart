@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'district_directory.dart';
 import '../../core/app_scope.dart';
 import '../../core/models.dart';
 import '../../shared/widgets.dart';
@@ -12,17 +12,14 @@ class HelpScreen extends StatefulWidget {
 }
 
 class _HelpScreenState extends State<HelpScreen> {
-  final text = TextEditingController(),
-      city = TextEditingController(text: 'lima');
+  final text = TextEditingController();
   final form = GlobalKey<FormState>();
   Analysis? analysis;
-  Map<String, dynamic>? numbers;
-  String? error, directoryMessage;
+  String? error;
   bool busy = false;
   @override
   void dispose() {
     text.dispose();
-    city.dispose();
     super.dispose();
   }
 
@@ -46,31 +43,6 @@ class _HelpScreenState extends State<HelpScreen> {
     }
   }
 
-  Future<int> contacts() async {
-    try {
-      final result = await AppScope.of(context).api.request(
-        'GET',
-        'emergency-contacts?${Uri(queryParameters: {'country': 'PE', 'city': city.text.trim()}).query}',
-      );
-      if (mounted) {
-        setState(() {
-          numbers = result['numbers'] as Map<String, dynamic>;
-          directoryMessage = null;
-        });
-      }
-      return numbers?.length ?? 0;
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          numbers = null;
-          directoryMessage =
-              'No hay un directorio disponible para esta ciudad. Consulta el canal oficial de tu zona.';
-        });
-      }
-      return 0;
-    }
-  }
-
   @override
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.fromLTRB(24, 30, 24, 100),
@@ -79,6 +51,7 @@ class _HelpScreenState extends State<HelpScreen> {
         'Ayuda cuando la necesitas',
         'Orientación por reglas y contactos publicados por la administración.',
       ),
+      const DistrictDirectory(),
       Card(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -120,52 +93,6 @@ class _HelpScreenState extends State<HelpScreen> {
                 ],
               ],
             ),
-          ),
-        ),
-      ),
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Contactos de ayuda',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 16),
-              AppField(label: 'Ciudad', controller: city),
-              OutlinedButton(
-                onPressed: contacts,
-                child: const Text('Consultar contactos'),
-              ),
-              if (directoryMessage != null) MessageCard(directoryMessage!),
-              ...?numbers?.entries.map(
-                (e) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    {
-                          'police': 'Policía',
-                          'firefighters': 'Bomberos',
-                          'medical': 'Emergencias médicas',
-                          'municipal': 'Municipalidad',
-                        }[e.key] ??
-                        e.key,
-                  ),
-                  subtitle: Text(e.value as String),
-                  trailing: const Icon(Icons.phone_outlined),
-                  onTap: () => launchUrl(
-                    Uri(
-                      scheme: 'tel',
-                      path: (e.value as String).replaceAll(
-                        RegExp(r'[^+0-9]'),
-                        '',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
       ),

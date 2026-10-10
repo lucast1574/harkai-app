@@ -6,6 +6,7 @@ ThemeData appTheme(Brightness brightness) {
   final dark = brightness == Brightness.dark;
   return ThemeData(
     useMaterial3: true,
+    focusColor: Colors.transparent,
     brightness: brightness,
     fontFamily: 'Roboto',
     colorScheme: ColorScheme.fromSeed(
@@ -21,6 +22,10 @@ ThemeData appTheme(Brightness brightness) {
       filled: true,
       fillColor: dark ? const Color(0xff1a3540) : const Color(0xfff3f6f4),
       border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
