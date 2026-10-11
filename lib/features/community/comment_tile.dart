@@ -17,21 +17,14 @@ class CommentTile extends StatelessWidget {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(
-          radius: 17,
-          child: Text(
-            comment.name.isEmpty
-                ? '·'
-                : comment.name.substring(0, 1).toUpperCase(),
-          ),
-        ),
+        CircleAvatar(radius: 17, child: Text('V')),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                comment.deleted ? 'Comentario retirado' : comment.name,
+                comment.deleted ? 'Comentario retirado' : 'Vecino anónimo',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               Text(

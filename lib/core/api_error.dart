@@ -3,7 +3,9 @@ class ApiException implements Exception {
   final String code;
   const ApiException(this.status, this.code);
   @override
-  String toString() => code == 'image_rejected'
+  String toString() => code == 'content_rejected'
+      ? 'Edita las groserías u obscenidades antes de publicar.'
+      : code == 'image_rejected'
       ? 'La foto no pasó la revisión de contenido. Elige otra imagen.'
       : switch (status) {
           400 => 'Revisa los campos y vuelve a intentarlo.',

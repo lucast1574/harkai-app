@@ -166,7 +166,7 @@ class _ReportCommentsState extends State<ReportComments> {
                       : null,
                 ),
                 const Text(
-                  'No compartas datos personales ni acusaciones sin sustento.',
+                  'Participas como vecino anónimo. Evita insultos y datos que te identifiquen.',
                   style: TextStyle(fontSize: 12),
                 ),
                 TextButton(
