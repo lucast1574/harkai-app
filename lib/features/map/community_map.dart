@@ -7,6 +7,7 @@ import '../help/support_place.dart';
 
 class CommunityMap extends StatelessWidget {
   final LatLng center;
+  final LatLng? userPosition;
   final List<Incident> incidents;
   final List<SupportPlace> supportPlaces;
   final ValueChanged<Incident>? onReport;
@@ -14,6 +15,7 @@ class CommunityMap extends StatelessWidget {
   const CommunityMap({
     super.key,
     required this.center,
+    this.userPosition,
     this.incidents = const [],
     this.supportPlaces = const [],
     this.onReport,
@@ -39,7 +41,9 @@ class CommunityMap extends StatelessWidget {
         ),
         MarkerLayer(
           markers: [
-            if (onPoint != null)
+            if (onPoint != null &&
+                (userPosition == null ||
+                    const Distance()(center, userPosition!) > 20))
               Marker(
                 point: center,
                 width: 42,
@@ -57,9 +61,10 @@ class CommunityMap extends StatelessWidget {
                 height: 44,
                 child: IconButton(
                   tooltip: p.name,
-                  icon: const Icon(
-                    Icons.local_hospital,
-                    color: Color(0xff245b9b),
+                  icon: const CircleAvatar(
+                    backgroundColor: Color(0xffd94750),
+                    radius: 16,
+                    child: Icon(Icons.add, color: Colors.white, size: 25),
                   ),
                   onPressed: () => showModalBottomSheet(
                     context: context,
@@ -91,6 +96,24 @@ class CommunityMap extends StatelessWidget {
                 ),
               ),
             ),
+            if (userPosition != null)
+              Marker(
+                point: userPosition!,
+                width: 30,
+                height: 30,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xff267eff),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 4),
+                  ),
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
+              ),
           ],
         ),
         RichAttributionWidget(

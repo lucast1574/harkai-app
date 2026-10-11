@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart' hide Category;
 import 'api_client.dart';
+import 'dart:convert';
+import '../features/help/support_place.dart';
 import '../features/notifications/notification_service.dart';
 import 'api_error.dart';
 import 'models.dart';
@@ -8,8 +10,19 @@ class AppController extends ChangeNotifier {
   final ApiClient api;
   Account? account;
   String? pendingReport;
+  SupportPlace? pendingSupport;
   late final notifications = NotificationService(api, () => account?.id, (id) {
-    pendingReport = id;
+    if (id.startsWith('support:')) {
+      try {
+        pendingSupport = SupportPlace.fromJson(
+          jsonDecode(id.substring(8)) as Map<String, dynamic>,
+        );
+      } catch (_) {
+        return false;
+      }
+    } else {
+      pendingReport = id;
+    }
     notifyListeners();
     return true;
   });
@@ -98,6 +111,7 @@ class AppController extends ChangeNotifier {
     await api.logout();
     await notifications.stop();
     pendingReport = null;
+    pendingSupport = null;
     account = null;
     notifyListeners();
     return true;

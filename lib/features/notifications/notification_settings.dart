@@ -67,7 +67,7 @@ class _NotificationSettingsState extends State<NotificationSettings> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Usaremos tu ubicación una vez al activar o actualizar la zona. No seguimos tu ubicación en segundo plano.',
+              'Usaremos tu ubicación una vez al activar o actualizar la zona. No seguimos tu ubicación en segundo plano. Con el mapa abierto también puedes recibir un aviso de salud cercano, como máximo uno al día.',
             ),
             if (!ready)
               const MessageCard(

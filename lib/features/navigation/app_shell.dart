@@ -8,6 +8,7 @@ import '../reports/create_report.dart';
 import '../auth/login_screen.dart';
 import '../account/profile_screen.dart';
 import '../help/help_screen.dart';
+import '../help/support_place.dart';
 import 'app_drawer.dart';
 
 class AppShell extends StatefulWidget {
@@ -83,6 +84,23 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final account = app.account;
+    final support = app.pendingSupport;
+    if (support != null && account != null && !app.loading) {
+      app.pendingSupport = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && AppScope.of(context).account?.id == account.id) {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (_) => SafeArea(
+              child: SingleChildScrollView(
+                child: SupportPlaceDetails(place: support),
+              ),
+            ),
+          );
+        }
+      });
+    }
     final pending = app.pendingReport;
     if (pending != null && account != null && !app.loading) {
       app.pendingReport = null;

@@ -153,7 +153,10 @@ class NotificationService {
   }
 
   bool open(dynamic id) =>
-      currentUser() != null && validReportID(id) && onOpen(id as String);
+      currentUser() != null &&
+      id is String &&
+      (validReportID(id) || id.startsWith('support:')) &&
+      onOpen(id);
   bool validReportID(dynamic id) =>
       id is String && RegExp(r'^[a-f0-9]{24}$').hasMatch(id);
 }

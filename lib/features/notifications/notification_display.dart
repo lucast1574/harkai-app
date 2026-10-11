@@ -47,6 +47,27 @@ class NotificationDisplay {
     return true;
   }
 
+  Future<bool> showSupport(String name, int meters, String payload) async {
+    await plugin.show(
+      2000000001,
+      'Un lugar de salud cerca de ti',
+      '$name · aprox. $meters m. Punto permanente de ayuda, no una alerta.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'harkai_support',
+          'Lugares de salud cercanos',
+          channelDescription:
+              'Puntos permanentes de salud cerca de tu ubicación',
+          icon: 'ic_notifications',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+      ),
+      payload: payload,
+    );
+    return true;
+  }
+
   Future<bool> cancel() async {
     await plugin.cancelAll();
     return true;

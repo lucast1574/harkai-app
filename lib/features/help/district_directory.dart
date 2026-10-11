@@ -76,7 +76,7 @@ class _DistrictDirectoryState extends State<DistrictDirectory> {
               initialValue: city,
               decoration: const InputDecoration(labelText: 'Ciudad'),
               items: const [
-                DropdownMenuItem(value: 'lima', child: Text('Lima')),
+                DropdownMenuItem(value: 'lima', child: Text('Lima y Callao')),
                 DropdownMenuItem(value: 'trujillo', child: Text('Trujillo')),
               ],
               onChanged: busy

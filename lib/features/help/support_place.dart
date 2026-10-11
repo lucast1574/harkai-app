@@ -10,7 +10,7 @@ class SupportPlace {
       source,
       locationSource,
       reviewed;
-  final String? phone;
+  final String? phone, institution, classification;
   final double latitude, longitude;
   const SupportPlace({
     required this.id,
@@ -24,7 +24,24 @@ class SupportPlace {
     required this.latitude,
     required this.longitude,
     this.phone,
+    this.institution,
+    this.classification,
   });
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'kind': kind,
+    'address': address,
+    'district': district,
+    'source_url': source,
+    'location_source_url': locationSource,
+    'reviewed_at': reviewed,
+    'latitude': latitude,
+    'longitude': longitude,
+    'phone': phone,
+    'institution': institution,
+    'classification': classification,
+  };
   factory SupportPlace.fromJson(Map<String, dynamic> data) => SupportPlace(
     id: data['id'] as String,
     name: data['name'] as String,
@@ -37,6 +54,8 @@ class SupportPlace {
     latitude: (data['latitude'] as num).toDouble(),
     longitude: (data['longitude'] as num).toDouble(),
     phone: data['phone'] as String?,
+    institution: data['institution'] as String?,
+    classification: data['classification'] as String?,
   );
 }
 
@@ -51,6 +70,8 @@ class SupportPlaceDetails extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(place.name, style: Theme.of(context).textTheme.titleLarge),
+        if (place.institution != null) Text(place.institution!),
+        if (place.classification != null) Text(place.classification!),
         const SizedBox(height: 12),
         Text('${place.address} · ${place.district}'),
         const SizedBox(height: 12),

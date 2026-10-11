@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:geolocator/geolocator.dart';
+import '../location/foreground_location.dart';
+import '../help/support_proximity.dart';
+import '../help/support_proximity_notice.dart';
+import '../help/nearby_support_card.dart';
+import '../help/coverage_notice.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/app_scope.dart';
 import '../../core/models.dart';
@@ -7,7 +14,6 @@ import '../map/community_map.dart';
 import '../help/district_directory.dart';
 import '../help/support_place.dart';
 import '../help/support_place_list.dart';
-import '../location/location_service.dart';
 import 'report_repository.dart';
 import 'report_tile.dart';
 import 'report_detail.dart';
@@ -28,6 +34,24 @@ class ReportBrowser extends StatefulWidget {
 }
 
 class _ReportBrowserState extends State<ReportBrowser> {
+  bool? covered;
+  String? coverageError;
+  LatLng? userPosition;
+  double userAccuracy = 1000;
+  DateTime? positionTime;
+  ForegroundLocation? location;
+  SupportProximityNotice? supportNotice;
+  bool get supportEnabled =>
+      widget.showMap &&
+      !widget.history &&
+      !widget.alerts &&
+      (widget.fixedType.isEmpty || widget.fixedType == 'place');
+  List<NearbySupport> get nearby =>
+      userPosition == null ||
+          positionTime == null ||
+          DateTime.now().difference(positionTime!) > const Duration(minutes: 2)
+      ? []
+      : nearbySupport(supportPlaces, userPosition!, accuracy: userAccuracy);
   LatLng center = const LatLng(-12.0464, -77.0428);
   int radius = 5000;
   String type = '';
@@ -43,8 +67,19 @@ class _ReportBrowserState extends State<ReportBrowser> {
     super.didChangeDependencies();
     if (!initialized) {
       initialized = true;
+      location = ForegroundLocation(
+        track: supportEnabled,
+        onPosition: acceptPosition,
+        onError: (e) {
+          if (mounted) setState(() => error = e.toString());
+          return false;
+        },
+      );
       type = widget.fixedType;
-      Future.microtask(() => load());
+      Future.microtask(() async {
+        unawaited(load());
+        if (supportEnabled) await location!.start();
+      });
     }
   }
 
@@ -58,6 +93,9 @@ class _ReportBrowserState extends State<ReportBrowser> {
         cursor = null;
       }
     });
+    final supportLoad = supportEnabled && !more
+        ? loadSupport(version)
+        : Future.value(0);
     try {
       final page = await ReportRepository(AppScope.of(context).api).list(
         latitude: center.latitude,
@@ -85,19 +123,13 @@ class _ReportBrowserState extends State<ReportBrowser> {
     } finally {
       if (mounted && version == generation) setState(() => busy = false);
     }
-    if (widget.showMap &&
-        !widget.history &&
-        !widget.alerts &&
-        (widget.fixedType.isEmpty || widget.fixedType == 'place')) {
-      await loadSupport(version);
-    }
+    await supportLoad;
     return items.length;
   }
 
   Future<int> loadSupport(int version) async {
     if (!mounted || version != generation) return 0;
     setState(() {
-      supportPlaces = [];
       supportError = null;
     });
     try {
@@ -120,20 +152,68 @@ class _ReportBrowserState extends State<ReportBrowser> {
         );
       }
     }
+    if (mounted && version == generation && supportError == null) {
+      final app = AppScope.of(context);
+      supportNotice ??= SupportProximityNotice(
+        app.api,
+        app.notifications.display,
+        () => app.account?.id,
+      );
+      await supportNotice!.notify(
+        nearby,
+        enabled:
+            (location?.active ?? false) &&
+            app.notifications.enabled &&
+            app.account?.preferences.notifications != 'none',
+      );
+    }
     return supportPlaces.length;
   }
 
-  Future<bool> locate() async {
+  Future<bool> locate() async => location!.start(requestPermission: true);
+
+  Future<bool> acceptPosition(Position p) async {
+    if (!mounted) return false;
+    setState(() {
+      covered = null;
+      coverageError = null;
+      userPosition = LatLng(p.latitude, p.longitude);
+      userAccuracy = p.accuracy;
+      positionTime = p.timestamp;
+      if (p.accuracy <= 150) center = userPosition!;
+    });
+    if (p.accuracy <= 150) await Future.wait([load(), loadCoverage(p)]);
+    return true;
+  }
+
+  Future<bool> loadCoverage(Position position) async {
     try {
-      final p = await currentLocation();
-      if (!mounted) return false;
-      setState(() => center = LatLng(p.latitude, p.longitude));
-      await load();
-      return true;
-    } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      final data = await AppScope.of(context).api.request(
+        'GET',
+        'support/coverage?lat=${position.latitude}&lng=${position.longitude}',
+      );
+      if (mounted && positionTime == position.timestamp) {
+        setState(() {
+          covered = data['covered'] as bool;
+          coverageError = null;
+        });
+      }
+      return data['covered'] as bool;
+    } catch (_) {
+      if (mounted && positionTime == position.timestamp) {
+        setState(() {
+          covered = null;
+          coverageError = 'unavailable';
+        });
+      }
       return false;
     }
+  }
+
+  @override
+  void dispose() {
+    location?.dispose();
+    super.dispose();
   }
 
   Future<bool> open(Incident i) async {
@@ -233,12 +313,13 @@ class _ReportBrowserState extends State<ReportBrowser> {
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Mostrar centros de salud y ayuda'),
-              subtitle: const Text(
-                'Marcadores azules · directorio, no alertas',
-              ),
+              subtitle: const Text('Cruz blanca en rojo · lugares permanentes'),
               value: showSupport,
               onChanged: (v) => setState(() => showSupport = v ?? true),
             ),
+          if (supportEnabled)
+            CoverageNotice(covered: covered, error: coverageError),
+          if (supportEnabled) NearbySupportCard(nearby: nearby),
           if (supportError != null) MessageCard(supportError!, error: true),
           if (widget.fixedType == 'place')
             SupportPlaceList(places: supportPlaces),
@@ -249,6 +330,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
               height: 340,
               child: CommunityMap(
                 center: center,
+                userPosition: userPosition,
                 incidents: items,
                 supportPlaces: showSupport ? supportPlaces : const [],
                 onReport: open,

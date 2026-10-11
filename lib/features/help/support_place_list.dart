@@ -10,9 +10,9 @@ class SupportPlaceList extends StatelessWidget {
         .map(
           (place) => Card(
             child: ListTile(
-              leading: const Icon(
-                Icons.local_hospital,
-                color: Color(0xff245b9b),
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xffd94750),
+                child: Icon(Icons.add, color: Colors.white),
               ),
               title: Text(place.name),
               subtitle: Text('${place.address} · ${place.district}'),
