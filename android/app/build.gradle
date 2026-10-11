@@ -1,10 +1,5 @@
 plugins {
     id "com.android.application"
-    // START: FlutterFire Configuration
-    id 'com.google.gms.google-services'
-    id 'com.google.firebase.firebase-perf'
-    id 'com.google.firebase.crashlytics'
-    // END: FlutterFire Configuration
     id "kotlin-android"
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
@@ -35,28 +30,25 @@ android {
         applicationId = "com.lucast.harkai"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdkVersion = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode 2
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        minSdkVersion flutter.minSdkVersion 
     }
 
     signingConfigs{
         release {
             keyAlias keystoreProperties['keyAlias']
             keyPassword keystoreProperties['keyPassword']
-            storeFile file(keystoreProperties['storeFile']) ? file(keystoreProperties['storeFile']) : null
+            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
             storePassword keystoreProperties['storePassword']
         }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.release
+            // Production publishing requires key.properties and the release keystore.
+            signingConfig = keystoreFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
 }
@@ -69,3 +61,5 @@ dependencies {
     // This line is required for core library desugaring.
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }
+
+if (file('google-services.json').exists()) { apply plugin: 'com.google.gms.google-services' }
