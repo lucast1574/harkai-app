@@ -71,6 +71,7 @@ class ForegroundLocation with WidgetsBindingObserver {
 
   bool dispose() {
     disposed = true;
+    active = false;
     generation++;
     updates?.cancel();
     WidgetsBinding.instance.removeObserver(this);

@@ -84,6 +84,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
   }
 
   Future<int> load({bool more = false}) async {
+    if (!mounted) return 0;
     final version = ++generation;
     setState(() {
       busy = true;
