@@ -19,6 +19,7 @@ class CommunityMap extends StatefulWidget {
   final double initialZoom;
   final int focusRequest;
   final bool userPositionFresh;
+  final double bottomObstruction, topObstruction;
   const CommunityMap({
     super.key,
     required this.center,
@@ -32,6 +33,8 @@ class CommunityMap extends StatefulWidget {
     this.initialZoom = 13.5,
     this.focusRequest = 0,
     this.userPositionFresh = true,
+    this.bottomObstruction = 0,
+    this.topObstruction = 0,
   });
 
   @override
@@ -46,15 +49,35 @@ class _CommunityMapState extends State<CommunityMap> {
   void didUpdateWidget(covariant CommunityMap oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_ready && oldWidget.focusRequest != widget.focusRequest) {
-      _controller.move(widget.userPosition ?? widget.center, 16.5);
+      _controller.move(
+        widget.userPosition ?? widget.center,
+        16.5,
+        offset: Offset(
+          0,
+          (widget.topObstruction - widget.bottomObstruction) / 2,
+        ),
+      );
       return;
     }
     if (_ready &&
         (oldWidget.center.latitude != widget.center.latitude ||
             oldWidget.center.longitude != widget.center.longitude)) {
       final zoom = _controller.camera.zoom;
-      _controller.move(widget.center, zoom < 11 ? widget.initialZoom : zoom);
+      _controller.move(
+        widget.center,
+        zoom < 11 ? widget.initialZoom : zoom,
+        offset: Offset(
+          0,
+          (widget.topObstruction - widget.bottomObstruction) / 2,
+        ),
+      );
     }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override

@@ -25,7 +25,7 @@ CategoryVisual categoryVisual(String type) => switch (type) {
     id: 'crime',
     shortLabel: 'Crimen',
     color: Color(0xff573a83),
-    icon: Icons.shield_outlined,
+    icon: Icons.report_outlined,
     callLabel: 'Llamar a Policía (105)',
   ),
   'theft' => const CategoryVisual(
@@ -162,12 +162,39 @@ ThemeData appTheme(Brightness brightness) {
     focusColor: Colors.transparent,
     brightness: brightness,
     fontFamily: 'Roboto',
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: green,
-      brightness: brightness,
-      primary: dark ? green : const Color(0xff16794b),
-      secondary: green,
-      surface: surface,
+    colorScheme:
+        ColorScheme.fromSeed(
+          seedColor: green,
+          brightness: brightness,
+          primary: dark ? green : const Color(0xff16794b),
+          secondary: green,
+          surface: surface,
+        ).copyWith(
+          surfaceContainerLowest: scaffoldBg,
+          surfaceContainerLow: surface,
+          surfaceContainer: dark
+              ? const Color(0xff152d40)
+              : const Color(0xfff1f5f9),
+          surfaceContainerHigh: dark
+              ? const Color(0xff1b354a)
+              : const Color(0xffe8eef4),
+          surfaceContainerHighest: dark
+              ? const Color(0xff233f55)
+              : const Color(0xffdfe7ef),
+          onSurface: dark ? const Color(0xffedf3f8) : navy,
+          onSurfaceVariant: dark
+              ? const Color(0xffafc1ce)
+              : const Color(0xff526477),
+          primaryContainer: dark
+              ? const Color(0xff183d36)
+              : const Color(0xffdcf5e4),
+        ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: surface,
+      surfaceTintColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
     ),
     scaffoldBackgroundColor: scaffoldBg,
     appBarTheme: AppBarTheme(
@@ -178,22 +205,26 @@ ThemeData appTheme(Brightness brightness) {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: dark ? const Color(0xff163147) : const Color(0xfff8fafc),
+      fillColor: WidgetStateColor.resolveWith(
+        (states) => dark
+            ? (states.contains(WidgetState.focused)
+                  ? const Color(0xff203b50)
+                  : const Color(0xff193246))
+            : (states.contains(WidgetState.focused)
+                  ? const Color(0xffe4edf5)
+                  : const Color(0xfff1f5f9)),
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: dark ? const Color(0xff264663) : const Color(0xffcbd5e1),
-        ),
+        borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(
-          color: dark ? const Color(0xff264663) : const Color(0xffe2e8f0),
-        ),
+        borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: green, width: 1.8),
+        borderSide: BorderSide.none,
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
     ),

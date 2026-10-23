@@ -5,7 +5,6 @@ import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets.dart';
 import '../reports/report_repository.dart';
-import 'district_directory.dart';
 
 class HelpScreen extends StatefulWidget {
   const HelpScreen({super.key});
@@ -49,62 +48,31 @@ class _HelpScreenState extends State<HelpScreen> {
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
     children: [
-      // Harkbot Hero Banner
-      Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: navy,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: green, width: 2),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Image.asset(
-                  'assets/images/bot.png',
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => const Icon(
-                    Icons.support_agent_rounded,
-                    color: navy,
-                    size: 28,
-                  ),
+      Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset('assets/images/bot.png', width: 48, height: 48),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Hola, soy Harki',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
-              ),
+                const SizedBox(height: 4),
+                const Text('Orientación y contactos de ayuda cerca de ti.'),
+              ],
             ),
-            const SizedBox(width: 14),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Asistente y Directorio Harkai',
-                    style: TextStyle(
-                      color: green,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Líneas de emergencia rápida, contactos por distrito y orientación inmediata.',
-                    style: TextStyle(color: Color(0xffcbd5e1), fontSize: 12.5),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-      const SizedBox(height: 16),
-
+      const SizedBox(height: 20),
       // Quick Emergency Dial Grid
       Row(
         children: [
@@ -162,10 +130,13 @@ class _HelpScreenState extends State<HelpScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.chat_bubble_outline_rounded, color: navy),
+                    Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     const SizedBox(width: 8),
                     Text(
-                      'Orientación rápida por situación',
+                      '¿En qué te ayudo?',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -243,7 +214,6 @@ class _HelpScreenState extends State<HelpScreen> {
       ),
 
       // District Directory
-      const DistrictDirectory(),
     ],
   );
 }

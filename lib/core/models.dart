@@ -22,16 +22,27 @@ class Preferences {
 }
 
 class Account {
+  final String? photoUrl;
   final String id, name, email, role;
   final Preferences preferences;
-  const Account(this.id, this.name, this.email, this.role, this.preferences);
+  const Account(
+    this.id,
+    this.name,
+    this.email,
+    this.role,
+    this.preferences, {
+    this.photoUrl,
+  });
   factory Account.fromJson(Map<String, dynamic> json) => Account(
     json['id'] as String,
     json['name'] as String,
     json['email'] as String,
     json['role'] as String,
     Preferences.fromJson(json['preferences'] as Map<String, dynamic>),
+    photoUrl: json['photo_url'] as String?,
   );
+  Account withPhoto(String? url) =>
+      Account(id, name, email, role, preferences, photoUrl: url);
 }
 
 class Category {

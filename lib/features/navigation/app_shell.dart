@@ -12,7 +12,7 @@ import '../reports/report_categories.dart';
 import '../../core/models.dart';
 import '../reports/report_browser.dart';
 import '../reports/report_detail.dart';
-import 'app_drawer.dart';
+import 'app_destinations.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -23,6 +23,62 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   final scaffold = GlobalKey<ScaffoldState>();
   int section = 0;
+  final sectionHistory = <int>[];
+
+  void selectSection(int value) {
+    if (value == section) return;
+    setState(() {
+      if (value == 0) {
+        sectionHistory.clear();
+      } else {
+        sectionHistory.add(section);
+      }
+      section = value;
+    });
+  }
+
+  void handleBack() {
+    if (scaffold.currentState?.isDrawerOpen == true) {
+      scaffold.currentState?.closeDrawer();
+      return;
+    }
+    if (sectionHistory.isNotEmpty) {
+      setState(() => section = sectionHistory.removeLast());
+    } else if (section != 0) {
+      setState(() => section = 0);
+    }
+  }
+
+  void openDestinations() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+          children: [
+            const ListTile(
+              title: Text(
+                'Explora Harkai',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              ),
+            ),
+            for (final index in [2, 3, 5, 6, 7])
+              ListTile(
+                leading: Icon(AppDestinations.entries[index].$1),
+                title: Text(AppDestinations.entries[index].$2),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  selectSection(index);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Future<bool> login() async {
     await Navigator.push(
@@ -55,48 +111,35 @@ class _AppShellState extends State<AppShell> {
     return true;
   }
 
-  Future<bool> logout() async {
-    try {
-      await AppScope.of(context).logout();
-      if (mounted) {
-        setState(() {
-          section = 0;
-        });
-      }
-      return true;
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
-      }
-      return false;
-    }
-  }
-
   void openProfileOrLogin() {
     if (AppScope.of(context).account == null) {
       login();
     } else {
-      setState(() => section = 8);
+      selectSection(8);
     }
   }
 
   Widget page() => switch (section) {
     1 => ReportBrowser(
       title: 'Reportes de la comunidad',
+      showMap: false,
       onCreateReport: create,
     ),
     2 => ReportBrowser(
       title: 'Mascotas perdidas y encontradas',
       fixedType: 'pet',
+      showMap: false,
       onCreateReport: create,
     ),
     3 => const ReportBrowser(
       title: 'Lugares de ayuda y salud',
       fixedType: 'place',
     ),
-    4 => const ReportBrowser(title: 'Mis alertas', alerts: true),
+    4 => const ReportBrowser(
+      title: 'Mis alertas',
+      alerts: true,
+      showMap: false,
+    ),
     5 => ReportBrowser(
       title: 'Mis reportes',
       history: true,
@@ -115,10 +158,10 @@ class _AppShellState extends State<AppShell> {
 
   Widget homeMap() => ReportBrowser(
     homeMode: true,
-    onOpenDrawer: () => scaffold.currentState?.openDrawer(),
+    onOpenDrawer: openDestinations,
     onOpenProfile: openProfileOrLogin,
-    onOpenHelp: () => setState(() => section = 7),
-    onSelectSection: (value) => setState(() => section = value),
+    onOpenHelp: () => selectSection(7),
+    onSelectSection: selectSection,
     onCreateReport: create,
   );
 
@@ -158,91 +201,112 @@ class _AppShellState extends State<AppShell> {
 
     final isHomeMap = section == 0 || app.loading || app.error != null;
 
-    return Scaffold(
-      key: scaffold,
-      appBar: isHomeMap
-          ? null
-          : AppBar(
-              backgroundColor: navy,
-              foregroundColor: Colors.white,
-              leading: IconButton(
-                tooltip: 'Abrir menú lateral',
-                onPressed: () => scaffold.currentState?.openDrawer(),
-                icon: const Icon(Icons.menu_rounded, color: green),
-              ),
-              title: Text(
-                AppDrawer.entries[section].$2,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) handleBack();
+      },
+      child: Scaffold(
+        key: scaffold,
+        appBar: isHomeMap
+            ? null
+            : AppBar(
+                backgroundColor: navy,
+                foregroundColor: Colors.white,
+                leading: IconButton(
+                  tooltip: 'Volver',
+                  onPressed: handleBack,
+                  icon: const Icon(Icons.arrow_back_rounded),
                 ),
-              ),
-              actions: [
-                if (section != 0)
+                actions: [
                   IconButton(
-                    tooltip: 'Volver al mapa',
-                    onPressed: () => setState(() => section = 0),
-                    icon: const Icon(Icons.map_outlined, color: green),
+                    tooltip: 'Explorar',
+                    onPressed: openDestinations,
+                    icon: const Icon(Icons.apps_rounded),
                   ),
-                IconButton(
-                  tooltip: 'Mi cuenta',
-                  onPressed: openProfileOrLogin,
-                  icon: const Icon(
-                    Icons.account_circle_outlined,
-                    color: Colors.white,
+                ],
+                title: Text(
+                  AppDestinations.entries[section].$2,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ],
-            ),
-      drawer: AppDrawer(
-        section: section,
-        onSelect: (value) => setState(() => section = value),
-        onAccount: () {
-          account == null ? login() : logout();
-        },
-      ),
-      body: isHomeMap
-          ? KeyedSubtree(key: const ValueKey('home-map'), child: homeMap())
-          : SafeArea(
-              child: account == null && [4, 5, 8].contains(section)
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const PageHeading(
-                              'Una cuenta para tu comunidad',
-                              'Ingresa para guardar tus preferencias y ver tus reportes.',
-                            ),
-                            FilledButton(
-                              onPressed: login,
-                              child: const Text('Ingresar o crear cuenta'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : KeyedSubtree(
-                      key: ValueKey('$section:${account?.id}'),
-                      child: page(),
-                    ),
-            ),
-      floatingActionButton: isHomeMap || [3, 4, 7, 8].contains(section)
-          ? null
-          : FloatingActionButton.extended(
-              heroTag: 'report',
-              backgroundColor: green,
-              foregroundColor: navy,
-              onPressed: app.loading || app.error != null
-                  ? null
-                  : () => create(initialType: section == 2 ? 'pet' : null),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text(
-                'Reportar',
-                style: TextStyle(fontWeight: FontWeight.w800),
               ),
+        body: isHomeMap
+            ? KeyedSubtree(key: const ValueKey('home-map'), child: homeMap())
+            : SafeArea(
+                child: account == null && [4, 5, 8].contains(section)
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const PageHeading(
+                                'Una cuenta para tu comunidad',
+                                'Ingresa para guardar tus preferencias y ver tus reportes.',
+                              ),
+                              FilledButton(
+                                onPressed: login,
+                                child: const Text('Ingresar o crear cuenta'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : KeyedSubtree(
+                        key: ValueKey('$section:${account?.id}'),
+                        child: page(),
+                      ),
+              ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: switch (section) {
+            0 => 0,
+            4 => 2,
+            8 => 3,
+            _ => 1,
+          },
+          onDestinationSelected: (index) => selectSection([0, 1, 4, 8][index]),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.map_outlined),
+              selectedIcon: Icon(Icons.map_rounded),
+              label: 'Mapa',
             ),
+            NavigationDestination(
+              icon: Icon(Icons.view_agenda_outlined),
+              selectedIcon: Icon(Icons.view_agenda_rounded),
+              label: 'Comunidad',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.notifications_none_rounded),
+              selectedIcon: Icon(Icons.notifications_rounded),
+              label: 'Alertas',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline_rounded),
+              selectedIcon: Icon(Icons.person_rounded),
+              label: 'Cuenta',
+            ),
+          ],
+        ),
+        floatingActionButton: isHomeMap || [3, 4, 7, 8].contains(section)
+            ? null
+            : FloatingActionButton.extended(
+                heroTag: 'report',
+                backgroundColor: green,
+                foregroundColor: navy,
+                onPressed: app.loading || app.error != null
+                    ? null
+                    : () => create(initialType: section == 2 ? 'pet' : null),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text(
+                  'Reportar',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+      ),
     );
   }
 }

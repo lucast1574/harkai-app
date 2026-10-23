@@ -10,18 +10,10 @@ class PageHeading extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'HARKAI · COMUNIDAD',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            letterSpacing: 2,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-        const SizedBox(height: 14),
-        Text(
           title,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
-            letterSpacing: -1,
+            letterSpacing: -.4,
           ),
         ),
         const SizedBox(height: 10),

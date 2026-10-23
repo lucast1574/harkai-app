@@ -35,7 +35,11 @@ class _LoginScreenState extends State<LoginScreen> {
     final app = AppScope.of(context);
     try {
       if (google) {
-        await app.exchangeGoogle(await googleIdentityToken());
+        String? photo;
+        final token = await googleIdentityToken(
+          onPhoto: (value) => photo = value,
+        );
+        await app.exchangeGoogle(token, photoUrl: photo);
       } else {
         await app.login(
           email: email.text.trim(),

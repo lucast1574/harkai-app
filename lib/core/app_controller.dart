@@ -61,6 +61,7 @@ class AppController extends ChangeNotifier {
   Future<Account?> reloadAccount() async {
     try {
       account = Account.fromJson(await api.request('GET', 'me'));
+      await restorePhoto();
     } on ApiException catch (e) {
       if (e.status != 401) rethrow;
       await api.clear();
@@ -82,6 +83,7 @@ class AppController extends ChangeNotifier {
     );
     await api.save(session);
     account = Account.fromJson(session['user'] as Map<String, dynamic>);
+    await restorePhoto();
     if (capabilities['push_notifications'] == true) {
       await notifications.restore();
     }
@@ -89,7 +91,7 @@ class AppController extends ChangeNotifier {
     return account!;
   }
 
-  Future<Account> exchangeGoogle(String token) async {
+  Future<Account> exchangeGoogle(String token, {String? photoUrl}) async {
     final session = await api.request(
       'POST',
       'auth/google',
@@ -97,6 +99,15 @@ class AppController extends ChangeNotifier {
     );
     await api.save(session);
     account = Account.fromJson(session['user'] as Map<String, dynamic>);
+    final photo = Uri.tryParse(photoUrl ?? '');
+    if (photo?.scheme == 'https' &&
+        photo!.host.endsWith('.googleusercontent.com')) {
+      await api.storage.write(
+        key: 'harkai_photo_${account!.id}',
+        value: photoUrl,
+      );
+    }
+    await restorePhoto();
     if (capabilities['push_notifications'] == true) {
       await notifications.restore();
     }
@@ -116,4 +127,13 @@ class AppController extends ChangeNotifier {
 
   String categoryLabel(String id) =>
       categories.where((c) => c.id == id).firstOrNull?.label ?? id;
+
+  Future<bool> restorePhoto() async {
+    final user = account;
+    if (user == null) return false;
+    final photo =
+        user.photoUrl ?? await api.storage.read(key: 'harkai_photo_${user.id}');
+    if (account?.id == user.id) account = user.withPhoto(photo);
+    return photo != null;
+  }
 }

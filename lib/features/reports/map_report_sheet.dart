@@ -21,7 +21,14 @@ class MapReportSheet extends StatefulWidget {
 
 class _MapReportSheetState extends State<MapReportSheet> {
   final contentKey = GlobalKey();
+  final sheetController = DraggableScrollableController();
   double? contentHeight;
+
+  @override
+  void dispose() {
+    sheetController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +54,8 @@ class _MapReportSheetState extends State<MapReportSheet> {
         );
         final minimum = (110 / constraints.maxHeight).clamp(.10, maximum);
         return DraggableScrollableSheet(
-          initialChildSize: maximum,
+          controller: sheetController,
+          initialChildSize: minimum,
           minChildSize: minimum,
           maxChildSize: maximum,
           snap: true,
@@ -61,6 +69,9 @@ class _MapReportSheetState extends State<MapReportSheet> {
             clipBehavior: Clip.antiAlias,
             child: CustomScrollView(
               controller: controller,
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: ClampingScrollPhysics(),
+              ),
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
@@ -69,35 +80,97 @@ class _MapReportSheetState extends State<MapReportSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Center(
-                          child: Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: colors.onSurface.withValues(alpha: .18),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onVerticalDragUpdate: (details) {
+                            if (!sheetController.isAttached) return;
+                            sheetController.jumpTo(
+                              (sheetController.size -
+                                      details.delta.dy / constraints.maxHeight)
+                                  .clamp(minimum, maximum),
+                            );
+                          },
+                          onVerticalDragEnd: (details) {
+                            final target = details.primaryVelocity! < -100
+                                ? maximum
+                                : details.primaryVelocity! > 100
+                                ? minimum
+                                : sheetController.size > (minimum + maximum) / 2
+                                ? maximum
+                                : minimum;
+                            sheetController.animateTo(
+                              target,
+                              duration: MediaQuery.disableAnimationsOf(context)
+                                  ? Duration.zero
+                                  : const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                            );
+                          },
+                          onTap: () => sheetController.animateTo(
+                            sheetController.size > minimum + .02
+                                ? minimum
+                                : maximum,
+                            duration: MediaQuery.disableAnimationsOf(context)
+                                ? Duration.zero
+                                : const Duration(milliseconds: 220),
+                            curve: Curves.easeOutCubic,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Center(
+                                child: Container(
+                                  width: 40,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: colors.onSurface.withValues(
+                                      alpha: .24,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '¿Qué está pasando?',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: -.5,
+                                        color: colors.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  ListenableBuilder(
+                                    listenable: sheetController,
+                                    builder: (_, _) => Icon(
+                                      sheetController.isAttached &&
+                                              sheetController.size >
+                                                  minimum + .02
+                                          ? Icons.keyboard_arrow_down_rounded
+                                          : Icons.keyboard_arrow_up_rounded,
+                                      semanticLabel:
+                                          'Abrir o recoger categorías',
+                                      color: colors.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Elige una categoría para reportar cerca de ti.',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: colors.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 20),
-                        Text(
-                          '¿Qué está pasando?',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -.5,
-                            color: colors.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Elige una categoría para reportar en tu zona.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: colors.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
                         _ReportAction(
                           type: 'crime',
                           expanded: true,
@@ -126,39 +199,25 @@ class _MapReportSheetState extends State<MapReportSheet> {
                         Row(
                           children: [
                             Expanded(
-                              child: SizedBox(
-                                height: 64,
-                                child: OutlinedButton.icon(
-                                  onPressed: onEmergency,
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: colors.onSurface,
-                                    side: BorderSide(
-                                      color: colors.onSurface.withValues(
-                                        alpha: .12,
-                                      ),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                  icon: const Icon(
-                                    Icons.phone_in_talk_outlined,
-                                    size: 20,
-                                  ),
-                                  label: const Text(
-                                    'Emergencias',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                              child: TextButton.icon(
+                                onPressed: onEmergency,
+                                icon: const Icon(
+                                  Icons.phone_in_talk_outlined,
+                                  size: 22,
+                                ),
+                                label: const Text('Emergencias'),
+                                style: TextButton.styleFrom(
+                                  minimumSize: const Size(0, 56),
+                                  foregroundColor: colors.onSurface,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(
+                              height: 24,
+                              child: VerticalDivider(
+                                color: colors.outlineVariant,
+                              ),
+                            ),
                             Expanded(child: _HarkiHelpAction(onTap: onHelp)),
                           ],
                         ),
@@ -248,7 +307,7 @@ class _HarkiHelpAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Material(
-      color: colors.onSurface.withValues(alpha: .045),
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -261,8 +320,8 @@ class _HarkiHelpAction extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 child: Image.asset(
                   'assets/images/bot.png',
-                  width: 40,
-                  height: 40,
+                  width: 32,
+                  height: 32,
                   fit: BoxFit.cover,
                   filterQuality: FilterQuality.none,
                   excludeFromSemantics: true,

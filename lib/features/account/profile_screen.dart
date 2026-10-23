@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_scope.dart';
 import '../../core/models.dart';
-import '../../core/theme.dart';
 import '../../shared/widgets.dart';
+import '../../shared/app_choice_field.dart';
+import '../../shared/account_avatar.dart';
 import '../notifications/notification_settings.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -89,76 +90,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
       children: [
-        // Navy Hero Card (Restored & modernized from affaab0 Profile)
-        Container(
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            color: navy,
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: Column(
-            children: [
-              CircleAvatar(
-                radius: 38,
-                backgroundColor: green,
-                child: Text(
-                  user.name.trim().isNotEmpty
-                      ? user.name.trim()[0].toUpperCase()
-                      : 'U',
-                  style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w900,
-                    color: navy,
+        Row(
+          children: [
+            AccountAvatar(account: user, radius: 32),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.name,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                user.name,
-                style: const TextStyle(
-                  color: green,
-                  fontSize: 21,
-                  fontWeight: FontWeight.w800,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                user.email,
-                style: const TextStyle(color: Color(0xffcbd5e1), fontSize: 13),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  roleLabel.toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.1,
+                  const SizedBox(height: 4),
+                  Text(
+                    user.email,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    roleLabel,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              // Quick Card Block Emergency Button (1820 - from affaab0 Profile!)
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () => launchUrl(Uri(scheme: 'tel', path: '1820')),
-                  icon: const Icon(Icons.credit_card_off_rounded, size: 18),
-                  label: const Text('Bloquear tarjetas por robo (1820)'),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        ListTile(
+          leading: const Icon(Icons.credit_card_off_rounded),
+          title: const Text('Bloquear tarjetas por robo'),
+          subtitle: const Text('Línea 1820'),
+          trailing: const Icon(Icons.call_outlined),
+          onTap: () => launchUrl(Uri(scheme: 'tel', path: '1820')),
         ),
         const SizedBox(height: 16),
 
@@ -185,27 +155,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? 'Escribe al menos dos caracteres.'
                         : null,
                   ),
-                  DropdownButtonFormField<String>(
-                    borderRadius: BorderRadius.circular(16),
-                    initialValue: notifications,
-                    decoration: const InputDecoration(
-                      labelText: 'Qué alertas recibir',
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'all',
-                        child: Text('Todas, incluidas las no verificadas'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'critical',
-                        child: Text('Solo emergencias y seguridad'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'none',
-                        child: Text('Desactivadas'),
-                      ),
-                    ],
-                    onChanged: (v) => setState(() => notifications = v!),
+                  AppChoiceField(
+                    label: 'Qué alertas recibir',
+                    value: notifications,
+                    options: const {
+                      'all': 'Todas, incluidas las no verificadas',
+                      'critical': 'Solo emergencias y seguridad',
+                      'none': 'Desactivadas',
+                    },
+                    onChanged: (value) => setState(() => notifications = value),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -293,6 +251,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         NotificationSettings(key: ValueKey(user.id)),
+        ListTile(
+          leading: const Icon(Icons.logout_rounded),
+          title: const Text('Cerrar sesión'),
+          onTap: () async {
+            await AppScope.of(context).logout();
+          },
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

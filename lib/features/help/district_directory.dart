@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_scope.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets.dart';
+import '../../shared/app_choice_field.dart';
 
 class DistrictDirectory extends StatefulWidget {
   final ValueChanged<String>? onCityChange;
@@ -120,24 +121,16 @@ class _DistrictDirectoryState extends State<DistrictDirectory> {
               ],
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              key: ValueKey('$city:${items.length}'),
-              initialValue: matches.isEmpty ? null : district,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Distrito'),
-              items: items
-                  .map(
-                    (d) => DropdownMenuItem(
-                      value: d['district'] as String,
-                      child: Text(d['district'] as String),
-                    ),
-                  )
-                  .toList(),
+            AppChoiceField(
+              label: 'Distrito',
+              value: district,
+              options: {
+                for (final item in items)
+                  item['district'] as String: item['district'] as String,
+              },
               onChanged: busy
                   ? null
-                  : (value) {
-                      if (value != null) setState(() => district = value);
-                    },
+                  : (value) => setState(() => district = value),
             ),
             if (busy)
               const Padding(

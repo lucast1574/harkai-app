@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-Future<String> googleIdentityToken() async {
+Future<String> googleIdentityToken({void Function(String?)? onPhoto}) async {
   if (Firebase.apps.isEmpty) await Firebase.initializeApp();
   await GoogleSignIn.instance.initialize();
   final google = await GoogleSignIn.instance.authenticate();
@@ -14,6 +14,7 @@ Future<String> googleIdentityToken() async {
     GoogleAuthProvider.credential(idToken: token),
   );
   try {
+    onPhoto?.call(result.user?.photoURL ?? google.photoUrl);
     final identity = await result.user!.getIdToken(true);
     if (identity == null) throw Exception('Identidad no disponible.');
     return identity;
