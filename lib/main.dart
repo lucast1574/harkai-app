@@ -4,6 +4,7 @@ import 'core/app_controller.dart';
 import 'core/app_scope.dart';
 import 'core/theme.dart';
 import 'features/navigation/app_shell.dart';
+import 'features/splash/launch_experience.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,7 +34,7 @@ class HarkaiApp extends StatelessWidget {
               : theme == 'light'
               ? ThemeMode.light
               : ThemeMode.system,
-          home: const AppShell(),
+          home: const LaunchExperience(child: AppShell()),
         );
       },
     ),

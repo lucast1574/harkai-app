@@ -50,7 +50,7 @@ class AppController extends ChangeNotifier {
   }
 
   Future<List<Category>> loadMeta() async {
-    final meta = await api.request('GET', 'meta');
+    final meta = await api.request('GET', 'meta', authenticated: false);
     categories = (meta['categories'] as List)
         .map((c) => Category.fromJson(c as Map<String, dynamic>))
         .toList();
@@ -63,6 +63,7 @@ class AppController extends ChangeNotifier {
       account = Account.fromJson(await api.request('GET', 'me'));
     } on ApiException catch (e) {
       if (e.status != 401) rethrow;
+      await api.clear();
       account = null;
     }
     notifyListeners();

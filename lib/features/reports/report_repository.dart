@@ -69,6 +69,7 @@ class ReportRepository {
             : alerts
             ? 'alerts'
             : 'incidents'}?$query',
+        authenticated: history || alerts,
       ),
     );
   }

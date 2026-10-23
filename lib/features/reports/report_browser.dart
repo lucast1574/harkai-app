@@ -176,6 +176,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
       final data = await AppScope.of(context).api.request(
         'GET',
         'support/places?lat=${center.latitude}&lng=${center.longitude}&radius_meters=$radius',
+        authenticated: false,
       );
       if (mounted && version == generation) {
         setState(
@@ -243,6 +244,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
       final data = await AppScope.of(context).api.request(
         'GET',
         'support/coverage?lat=${position.latitude}&lng=${position.longitude}',
+        authenticated: false,
       );
       if (mounted && positionTime == position.timestamp) {
         setState(() {
@@ -682,6 +684,13 @@ class _ReportBrowserState extends State<ReportBrowser> {
             onEmergency: showEmergencyDialer,
             onHelp: () => widget.onOpenHelp?.call(),
             children: [
+              if (app.loading) const LinearProgressIndicator(minHeight: 2),
+              if (app.error != null)
+                MessageCard(
+                  'No se pudo actualizar la conexión. Puedes seguir explorando el mapa.',
+                  error: true,
+                  onRetry: app.initialize,
+                ),
               if (error != null)
                 MessageCard(error!, error: true, onRetry: () => load()),
             ],

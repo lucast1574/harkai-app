@@ -38,3 +38,7 @@ El seguimiento de alertas envía la última posición precisa (hasta 100 m y ant
 Las categorías del mapa abren una sola hoja inferior con descripción, audio y GPS real. Crimen no solicita subcategorías: el backend las resuelve con sus reglas al recibir `category`. Los otros tipos requieren coincidencia entre texto y categoría. Mascotas conserva evidencia y contacto. Este flujo requiere desplegar el contrato de categorías globales del backend; los clientes anteriores conservan el contrato `type`.
 
 Emergencias consulta el último reporte de la cuenta y obtiene los teléfonos del directorio por su ubicación, priorizando el servicio asociado al tipo. Sin reporte usa la posición disponible; fuera de cobertura muestra líneas nacionales. Harki aparece como acceso a Ayuda. El panel principal ya no incluye el bloque redundante de alertas/salud.
+
+## Inicio de la aplicación
+
+La splash recupera el escudo y los colores originales, dura 1,7 segundos y da paso al mapa sin esperar a la API. Con reducir animaciones usa una transición breve sin movimiento. El mapa se monta desde el primer cuadro debajo de la splash y nunca se sustituye por una pantalla global de carga o error. La metadata y las consultas públicas del mapa no envían la sesión guardada; una sesión vencida se limpia sin bloquear el acceso público. Los errores de conexión aparecen dentro del panel del mapa.

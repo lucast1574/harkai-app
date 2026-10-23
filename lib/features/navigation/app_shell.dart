@@ -110,15 +110,17 @@ class _AppShellState extends State<AppShell> {
     ),
     7 => const HelpScreen(),
     8 => const ProfileScreen(),
-    _ => ReportBrowser(
-      homeMode: true,
-      onOpenDrawer: () => scaffold.currentState?.openDrawer(),
-      onOpenProfile: openProfileOrLogin,
-      onOpenHelp: () => setState(() => section = 7),
-      onSelectSection: (value) => setState(() => section = value),
-      onCreateReport: create,
-    ),
+    _ => homeMap(),
   };
+
+  Widget homeMap() => ReportBrowser(
+    homeMode: true,
+    onOpenDrawer: () => scaffold.currentState?.openDrawer(),
+    onOpenProfile: openProfileOrLogin,
+    onOpenHelp: () => setState(() => section = 7),
+    onSelectSection: (value) => setState(() => section = value),
+    onCreateReport: create,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +156,7 @@ class _AppShellState extends State<AppShell> {
       });
     }
 
-    final isHomeMap = section == 0 && !app.loading && app.error == null;
+    final isHomeMap = section == 0 || app.loading || app.error != null;
 
     return Scaffold(
       key: scaffold,
@@ -200,28 +202,9 @@ class _AppShellState extends State<AppShell> {
         },
       ),
       body: isHomeMap
-          ? KeyedSubtree(key: ValueKey('0:${account?.id}'), child: page())
+          ? KeyedSubtree(key: const ValueKey('home-map'), child: homeMap())
           : SafeArea(
-              child: app.loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : app.error != null
-                  ? Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        children: [
-                          const PageHeading(
-                            'Conectemos tu comunidad',
-                            'El mapa y los reportes se consultan en Harkai.',
-                          ),
-                          MessageCard(
-                            app.error!,
-                            error: true,
-                            onRetry: app.initialize,
-                          ),
-                        ],
-                      ),
-                    )
-                  : account == null && [4, 5, 8].contains(section)
+              child: account == null && [4, 5, 8].contains(section)
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24),

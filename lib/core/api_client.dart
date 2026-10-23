@@ -59,10 +59,13 @@ class ApiClient {
     Map<String, dynamic>? body,
     Uint8List? bytes,
     String? contentType,
+    bool authenticated = true,
   }) async {
     final request = http.Request(method, Uri.parse('$baseUrl/v1/$path'));
     final token = _session?['access_token'];
-    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    if (authenticated && token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
     if (body != null) {
       request.headers['Content-Type'] = 'application/json';
       request.body = jsonEncode(body);
@@ -143,6 +146,7 @@ class ApiClient {
     Map<String, dynamic>? body,
     Uint8List? bytes,
     String? contentType,
+    bool authenticated = true,
   }) async {
     var response = await _send(
       method,
@@ -150,8 +154,10 @@ class ApiClient {
       body: body,
       bytes: bytes,
       contentType: contentType,
+      authenticated: authenticated,
     );
-    if (response.statusCode == 401 &&
+    if (authenticated &&
+        response.statusCode == 401 &&
         !path.startsWith('auth/') &&
         await _refresh()) {
       response = await _send(
@@ -160,6 +166,7 @@ class ApiClient {
         body: body,
         bytes: bytes,
         contentType: contentType,
+        authenticated: authenticated,
       );
     }
     return _decode(response);
