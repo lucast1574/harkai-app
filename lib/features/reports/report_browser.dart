@@ -7,6 +7,7 @@ import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets.dart';
 import '../map/map_location_header.dart';
+import '../map/map_category_filters.dart';
 import '../help/coverage_notice.dart';
 import '../help/emergency_sheet.dart';
 import '../help/nearby_support_card.dart';
@@ -86,6 +87,8 @@ class _ReportBrowserState extends State<ReportBrowser> {
   String? cursor, error;
   bool busy = false, initialized = false;
   int generation = 0;
+  int supportGeneration = 0;
+  static const supportRadius = 5000;
   int focusRequest = 0;
   bool locating = false;
   double sheetExtent = .16;
@@ -134,7 +137,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
       }
     });
     final supportLoad = supportEnabled && !more
-        ? loadSupport(version)
+        ? loadSupport()
         : Future.value(0);
     if (widget.fixedType == 'place') {
       await supportLoad;
@@ -172,18 +175,19 @@ class _ReportBrowserState extends State<ReportBrowser> {
     return items.length;
   }
 
-  Future<int> loadSupport(int version) async {
-    if (!mounted || version != generation) return 0;
+  Future<int> loadSupport() async {
+    if (!mounted) return 0;
+    final version = ++supportGeneration;
     setState(() {
       supportError = null;
     });
     try {
       final data = await AppScope.of(context).api.request(
         'GET',
-        'support/places?lat=${center.latitude}&lng=${center.longitude}&radius_meters=$radius',
+        'support/places?lat=${center.latitude}&lng=${center.longitude}&radius_meters=$supportRadius',
         authenticated: false,
       );
-      if (mounted && version == generation) {
+      if (mounted && version == supportGeneration) {
         setState(
           () => supportPlaces = (data['items'] as List)
               .map((p) => SupportPlace.fromJson(p as Map<String, dynamic>))
@@ -191,14 +195,14 @@ class _ReportBrowserState extends State<ReportBrowser> {
         );
       }
     } catch (e) {
-      if (mounted && version == generation) {
+      if (mounted && version == supportGeneration) {
         setState(
           () => supportError =
               'No se pudo cargar el directorio de salud. Las alertas siguen disponibles.',
         );
       }
     }
-    if (mounted && version == generation && supportError == null) {
+    if (mounted && version == supportGeneration && supportError == null) {
       final app = AppScope.of(context);
       supportNotice ??= SupportProximityNotice(
         app.api,
@@ -262,7 +266,8 @@ class _ReportBrowserState extends State<ReportBrowser> {
     if (resolvedPoint != null &&
         districtTime != null &&
         const Distance()(resolvedPoint!, point) < 150 &&
-        DateTime.now().difference(districtTime!) < const Duration(minutes: 10)) {
+        DateTime.now().difference(districtTime!) <
+            const Duration(minutes: 10)) {
       return true;
     }
     final version = ++districtGeneration;
@@ -378,7 +383,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
             fullScreen: true,
             focusRequest: focusRequest,
             bottomObstruction: sheetExtent * MediaQuery.sizeOf(context).height,
-            topObstruction: MediaQuery.paddingOf(context).top + 80,
+            topObstruction: MediaQuery.paddingOf(context).top + 132,
             userPositionFresh:
                 positionTime != null &&
                 DateTime.now().difference(positionTime!) <
@@ -410,8 +415,21 @@ class _ReportBrowserState extends State<ReportBrowser> {
           ),
         ),
         Positioned(
+          top: MediaQuery.paddingOf(context).top + 76,
+          left: 0,
+          right: 0,
+          child: MapCategoryFilters(
+            selected: type,
+            count: items.length,
+            onChanged: (value) {
+              setState(() => type = value);
+              load(background: true);
+            },
+          ),
+        ),
+        Positioned(
           right: 14,
-          top: MediaQuery.paddingOf(context).top + 84,
+          top: MediaQuery.paddingOf(context).top + 132,
           child: _FloatingMapControlButton(
             tooltip: 'Centrar en mi ubicación GPS',
             icon: locating

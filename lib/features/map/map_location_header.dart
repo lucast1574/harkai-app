@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/models.dart';
 import '../../shared/account_avatar.dart';
-import '../../shared/harkai_mark.dart';
+import '../../core/theme.dart';
 
 class MapLocationHeader extends StatelessWidget {
   final Account? account;
@@ -37,7 +37,9 @@ class MapLocationHeader extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Material(
-          color: colors.surface.withValues(alpha: dark ? .58 : .66),
+          color: (dark ? navy : Colors.white).withValues(
+            alpha: dark ? .80 : .88,
+          ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
             child: Row(
@@ -49,7 +51,23 @@ class MapLocationHeader extends StatelessWidget {
                     tooltip: 'Explorar Harkai',
                     onPressed: onExplore,
                     padding: EdgeInsets.zero,
-                    icon: const HarkaiMark(),
+                    icon: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        width: 42,
+                        height: 42,
+                        child: OverflowBox(
+                          maxWidth: 60,
+                          maxHeight: 60,
+                          child: Image.asset(
+                            'assets/images/harkai_icon.png',
+                            width: 60,
+                            height: 60,
+                            semanticLabel: 'Harkai',
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 Expanded(

@@ -2,8 +2,50 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:harkai/core/theme.dart';
 import 'package:harkai/features/map/map_location_header.dart';
+import 'package:harkai/features/map/map_category_filters.dart';
 
 void main() {
+  for (final brightness in Brightness.values) {
+    testWidgets('local filters and original logo work in $brightness', (
+      tester,
+    ) async {
+      String? selected;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: appTheme(brightness),
+          home: Scaffold(
+            body: Column(
+              children: [
+                const MapLocationHeader(
+                  hasPosition: true,
+                  district: 'San Borja',
+                  province: 'Lima',
+                ),
+                MapCategoryFilters(
+                  selected: '',
+                  count: 1,
+                  onChanged: (value) => selected = value,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      final logo = tester
+          .widgetList<Image>(find.byType(Image))
+          .where(
+            (image) =>
+                image.image is AssetImage &&
+                (image.image as AssetImage).assetName ==
+                    'assets/images/harkai_icon.png',
+          );
+      expect(logo, hasLength(1));
+      expect(find.text('Todas (1)'), findsOneWidget);
+      await tester.tap(find.text('Crimen'));
+      expect(selected, 'crime');
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets(
     'header shows resolved locality and graphic flag without a zone selector',
     (tester) async {
