@@ -11,6 +11,7 @@ class SupportPlace {
       locationSource,
       reviewed;
   final String? phone, institution, classification;
+  final List<String> phones, photoUrls;
   final double latitude, longitude;
   const SupportPlace({
     required this.id,
@@ -26,6 +27,8 @@ class SupportPlace {
     this.phone,
     this.institution,
     this.classification,
+    this.phones = const [],
+    this.photoUrls = const [],
   });
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -41,6 +44,8 @@ class SupportPlace {
     'phone': phone,
     'institution': institution,
     'classification': classification,
+    'phones': phones,
+    'photo_urls': photoUrls,
   };
   factory SupportPlace.fromJson(Map<String, dynamic> data) => SupportPlace(
     id: data['id'] as String,
@@ -56,7 +61,14 @@ class SupportPlace {
     phone: data['phone'] as String?,
     institution: data['institution'] as String?,
     classification: data['classification'] as String?,
+    phones: List<String>.from(data['phones'] as List? ?? const []),
+    photoUrls: List<String>.from(data['photo_urls'] as List? ?? const []),
   );
+
+  List<String> get contactPhones => {
+    if (phone != null && phone!.isNotEmpty) phone!,
+    ...phones,
+  }.where((number) => RegExp(r'^\+?[0-9]{3,15}$').hasMatch(number)).toList();
 }
 
 class SupportPlaceDetails extends StatelessWidget {
@@ -69,39 +81,71 @@ class SupportPlaceDetails extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(place.name, style: Theme.of(context).textTheme.titleLarge),
-        if (place.institution != null) Text(place.institution!),
-        if (place.classification != null) Text(place.classification!),
-        const SizedBox(height: 12),
-        Text('${place.address} · ${place.district}'),
-        const SizedBox(height: 12),
-        const Text(
-          'Directorio de salud. No es una alerta. Ubicación de referencia; consulta disponibilidad y condiciones antes de acudir.',
-        ),
-        if (place.phone != null && place.phone!.isNotEmpty)
-          TextButton.icon(
-            onPressed: () => launchUrl(Uri(scheme: 'tel', path: place.phone)),
-            icon: const Icon(Icons.phone_outlined),
-            label: Text('Contacto institucional: ${place.phone}'),
+        Center(
+          child: Container(
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: .2),
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
-        TextButton.icon(
-          onPressed: () => launchUrl(
-            Uri.parse(place.source),
-            mode: LaunchMode.externalApplication,
-          ),
-          icon: const Icon(Icons.open_in_new),
-          label: const Text('Fuente institucional'),
         ),
-        TextButton(
-          onPressed: () => launchUrl(
-            Uri.parse(place.locationSource),
-            mode: LaunchMode.externalApplication,
-          ),
-          child: const Text('Fuente de ubicación'),
-        ),
+        const SizedBox(height: 20),
         Text(
-          'Fuentes consultadas: ${place.reviewed}. Para emergencias médicas consulta el SAMU; el contacto institucional no sustituye una línea de urgencias.',
+          place.name,
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
+        if (place.photoUrls.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.network(
+              place.photoUrls.first,
+              width: double.infinity,
+              height: 180,
+              fit: BoxFit.cover,
+              semanticLabel: 'Foto de ${place.name}',
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        for (final number in place.contactPhones)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () async {
+                  final opened = await launchUrl(
+                    Uri(scheme: 'tel', path: number),
+                    mode: LaunchMode.externalApplication,
+                  );
+                  if (!opened && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('No se pudo abrir el teléfono.'),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.call_outlined),
+                label: Text('Llamar · $number'),
+              ),
+            ),
+          ),
+        if (place.contactPhones.isEmpty)
+          Text(
+            'Teléfono no disponible',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
       ],
     ),
   );
