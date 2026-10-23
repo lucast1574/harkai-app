@@ -6,7 +6,7 @@ import '../../core/app_scope.dart';
 import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets.dart';
-import '../../shared/account_avatar.dart';
+import '../map/map_location_header.dart';
 import '../help/coverage_notice.dart';
 import '../help/emergency_sheet.dart';
 import '../help/nearby_support_card.dart';
@@ -56,6 +56,10 @@ class _ReportBrowserState extends State<ReportBrowser> {
   String? coverageError;
   LatLng? userPosition;
   double userAccuracy = 1000;
+  String? districtName, provinceName;
+  LatLng? resolvedPoint;
+  DateTime? districtTime;
+  int districtGeneration = 0;
   DateTime? positionTime;
   ForegroundLocation? location;
   SupportProximityNotice? supportNotice;
@@ -246,9 +250,50 @@ class _ReportBrowserState extends State<ReportBrowser> {
       }
     });
     if (p.accuracy <= 250) {
-      unawaited(Future.wait([load(background: true), loadCoverage(p)]));
+      unawaited(
+        Future.wait([load(background: true), loadCoverage(p), loadDistrict(p)]),
+      );
     }
     return true;
+  }
+
+  Future<bool> loadDistrict(Position position) async {
+    final point = LatLng(position.latitude, position.longitude);
+    if (resolvedPoint != null &&
+        districtTime != null &&
+        const Distance()(resolvedPoint!, point) < 150 &&
+        DateTime.now().difference(districtTime!) < const Duration(minutes: 10)) {
+      return true;
+    }
+    final version = ++districtGeneration;
+    if (mounted) {
+      setState(() {
+        districtName = null;
+        provinceName = null;
+        resolvedPoint = null;
+        districtTime = null;
+      });
+    }
+    try {
+      final result = await AppScope.of(context).api.request(
+        'GET',
+        'geo/district?lat=${position.latitude}&lng=${position.longitude}',
+        authenticated: false,
+      );
+      final district = result['district'] as Map<String, dynamic>;
+      final name = district['name'] as String;
+      final province = district['province'] as String;
+      if (!mounted || version != districtGeneration) return false;
+      setState(() {
+        districtName = name;
+        provinceName = province;
+        resolvedPoint = point;
+        districtTime = DateTime.now();
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<bool> loadCoverage(Position position) async {
@@ -326,7 +371,6 @@ class _ReportBrowserState extends State<ReportBrowser> {
 
   Widget _buildHomeMapExperience(BuildContext context) {
     final app = AppScope.of(context);
-    final colors = Theme.of(context).colorScheme;
     return Stack(
       children: [
         Positioned.fill(
@@ -354,44 +398,13 @@ class _ReportBrowserState extends State<ReportBrowser> {
             bottom: false,
             child: Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: Material(
-                color: colors.surface,
-                elevation: 4,
-                shadowColor: Colors.black26,
-                borderRadius: BorderRadius.circular(30),
-                child: SizedBox(
-                  height: 60,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        tooltip: 'Explorar Harkai',
-                        onPressed: widget.onOpenDrawer,
-                        icon: Image.asset(
-                          'assets/icon/icon.png',
-                          width: 32,
-                          height: 32,
-                        ),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'harkai',
-                          style: TextStyle(
-                            color: colors.onSurface,
-                            fontSize: 21,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -.5,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Mi cuenta',
-                        onPressed: widget.onOpenProfile,
-                        icon: AccountAvatar(account: app.account),
-                      ),
-                      const SizedBox(width: 6),
-                    ],
-                  ),
-                ),
+              child: MapLocationHeader(
+                account: app.account,
+                district: districtName,
+                province: provinceName,
+                hasPosition: userPosition != null,
+                onExplore: widget.onOpenDrawer,
+                onProfile: widget.onOpenProfile,
               ),
             ),
           ),
