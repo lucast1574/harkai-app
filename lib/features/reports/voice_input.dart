@@ -10,10 +10,12 @@ import '../../shared/widgets.dart';
 class VoiceInput extends StatefulWidget {
   final bool disabled;
   final void Function(String, Analysis) onTranscript;
+  final ValueChanged<bool>? onBusyChanged;
   const VoiceInput({
     super.key,
     required this.disabled,
     required this.onTranscript,
+    this.onBusyChanged,
   });
   @override
   State<VoiceInput> createState() => _VoiceInputState();
@@ -45,6 +47,7 @@ class _VoiceInputState extends State<VoiceInput> {
   }
 
   Future<bool> start() async {
+    widget.onBusyChanged?.call(true);
     setState(() {
       busy = true;
       error = null;
@@ -85,6 +88,7 @@ class _VoiceInputState extends State<VoiceInput> {
       return false;
     } finally {
       if (mounted) setState(() => busy = false);
+      if (!recording) widget.onBusyChanged?.call(false);
     }
   }
 
@@ -123,6 +127,7 @@ class _VoiceInputState extends State<VoiceInput> {
     } finally {
       if (path != null) await removeRecording(path!);
       if (mounted) setState(() => busy = false);
+      widget.onBusyChanged?.call(false);
     }
   }
 

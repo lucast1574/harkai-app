@@ -38,9 +38,10 @@ class ForegroundLocation with WidgetsBindingObserver {
       if (!track) return true;
       updates =
           Geolocator.getPositionStream(
-            locationSettings: const LocationSettings(
+            locationSettings: AndroidSettings(
               accuracy: LocationAccuracy.high,
-              distanceFilter: 100,
+              distanceFilter: 0,
+              intervalDuration: const Duration(seconds: 30),
             ),
           ).listen(
             (p) {

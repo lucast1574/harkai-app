@@ -77,11 +77,7 @@ class AppController extends ChangeNotifier {
     final session = await api.request(
       'POST',
       name == null ? 'auth/login' : 'auth/register',
-      body: {
-        'email': email,
-        'password': password,
-        if (name != null) 'name': name,
-      },
+      body: {'email': email, 'password': password, 'name': ?name},
     );
     await api.save(session);
     account = Account.fromJson(session['user'] as Map<String, dynamic>);

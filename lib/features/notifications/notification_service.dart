@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/api_client.dart';
 import 'notification_display.dart';
+import 'alert_location.dart';
 
 class NotificationService {
   static const storageKey = 'harkai_push_subscription_v1';
@@ -16,6 +17,19 @@ class NotificationService {
   StreamSubscription<RemoteMessage>? messages, opens;
   bool listening = false;
   int generation = 0;
+  late final tracking = AlertLocation(
+    api,
+    () => enabled && subscription?['live_location'] == true
+        ? (subscription?['device'] as String?)
+        : null,
+    onSynced: (position) async {
+      final saved = subscription;
+      if (saved == null || !enabled) return;
+      saved['latitude'] = position.latitude;
+      saved['longitude'] = position.longitude;
+      await api.storage.write(key: storageKey, value: jsonEncode(saved));
+    },
+  );
   NotificationService(this.api, this.currentUser, this.onOpen);
   bool get ownsZone =>
       subscription != null &&
@@ -39,6 +53,7 @@ class NotificationService {
       }
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) await register(token);
+      if (enabled && saved['live_location'] == true) await tracking.start();
       return enabled;
     } catch (_) {
       return false;
@@ -93,6 +108,7 @@ class NotificationService {
       'user': owner,
       'latitude': latitude,
       'longitude': longitude,
+      'live_location': true,
     };
     await setup();
     final settings = await FirebaseMessaging.instance.requestPermission();
@@ -107,7 +123,9 @@ class NotificationService {
     if (token == null || owner != currentUser()) {
       throw Exception('No se pudo registrar el dispositivo.');
     }
-    return register(token);
+    final registered = await register(token);
+    if (registered) await tracking.start();
+    return registered;
   }
 
   Future<bool> register(String token) async {
@@ -131,6 +149,7 @@ class NotificationService {
   }
 
   Future<bool> stop({bool removeDevice = false}) async {
+    await tracking.stop();
     final hadConsent = subscription != null;
     final id = subscription?['device'];
     if (removeDevice && id is String) {

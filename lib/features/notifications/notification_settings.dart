@@ -67,15 +67,31 @@ class _NotificationSettingsState extends State<NotificationSettings> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Usaremos tu ubicación una vez al activar o actualizar la zona. No seguimos tu ubicación en segundo plano. Con el mapa abierto también puedes recibir un aviso de salud cercano, como máximo uno al día.',
+              'Al activar, Harkai actualizará tu ubicación mientras te mueves, también al minimizar la app o bloquear la pantalla, con un aviso permanente de Android. Puedes detenerlo aquí. Si fuerzas el cierre de la app o Android detiene el servicio, se reanudará al abrirla.',
             ),
             if (!ready)
               const MessageCard(
                 'Las notificaciones están pendientes de configuración. Puedes consultar las alertas en el mapa.',
               ),
             if (enabled)
-              const MessageCard(
-                'Dispositivo registrado. Actualiza la zona si cambias de lugar.',
+              const MessageCard('Dispositivo registrado para recibir alertas.'),
+            if (enabled)
+              AnimatedBuilder(
+                animation: app.notifications.tracking,
+                builder: (context, _) {
+                  final tracking = app.notifications.tracking;
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      tracking.error ??
+                          (tracking.lastSync != null
+                              ? 'Tu zona se está actualizando automáticamente.'
+                              : tracking.running
+                              ? 'Esperando una ubicación precisa para actualizar tu zona…'
+                              : 'Activa el seguimiento para recibir alertas mientras te mueves.'),
+                    ),
+                  );
+                },
               ),
             if (error != null) MessageCard(error!, error: true),
             const SizedBox(height: 16),
@@ -85,8 +101,8 @@ class _NotificationSettingsState extends State<NotificationSettings> {
                 busy
                     ? 'Procesando…'
                     : enabled
-                    ? 'Actualizar zona con mi ubicación'
-                    : 'Usar mi ubicación y activar',
+                    ? 'Reactivar alertas durante mi recorrido'
+                    : 'Activar alertas durante mi recorrido',
               ),
             ),
             if (enabled)

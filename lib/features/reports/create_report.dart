@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../../core/app_scope.dart';
 import '../../core/models.dart';
+import '../../core/theme.dart';
 import '../../shared/widgets.dart';
 import '../location/location_service.dart';
 import 'report_repository.dart';
@@ -12,7 +15,9 @@ import 'report_description_step.dart';
 import 'report_review_step.dart';
 
 class CreateReport extends StatefulWidget {
-  const CreateReport({super.key});
+  final String? initialType;
+  final LatLng? initialPoint;
+  const CreateReport({super.key, this.initialType, this.initialPoint});
   @override
   State<CreateReport> createState() => _CreateReportState();
 }
@@ -24,6 +29,23 @@ class _CreateReportState extends State<CreateReport> {
   bool busy = false;
   String? error;
   Analysis? analysis;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialType != null &&
+        widget.initialType!.isNotEmpty &&
+        widget.initialType != 'place') {
+      draft.type = widget.initialType;
+    }
+    final pt = widget.initialPoint ?? const LatLng(-12.0464, -77.0428);
+    draft.latitude.text = pt.latitude.toStringAsFixed(6);
+    draft.longitude.text = pt.longitude.toStringAsFixed(6);
+    if (widget.initialPoint == null) {
+      Future.microtask(() => unawaited(locate(silent: true)));
+    }
+  }
+
   @override
   void dispose() {
     draft.dispose();
@@ -43,7 +65,9 @@ class _CreateReportState extends State<CreateReport> {
       if (mounted) {
         setState(() {
           analysis = result;
-          draft.type ??= result.suggestedType;
+          if (result.suggestedType != 'place') {
+            draft.type ??= result.suggestedType;
+          }
         });
       }
       return true;
@@ -55,18 +79,18 @@ class _CreateReportState extends State<CreateReport> {
     }
   }
 
-  Future<bool> locate() async {
+  Future<bool> locate({bool silent = false}) async {
     try {
       final p = await currentLocation();
       if (!mounted) return false;
       setState(() {
-        draft.latitude.text = '${p.latitude}';
-        draft.longitude.text = '${p.longitude}';
-        error = null;
+        draft.latitude.text = p.latitude.toStringAsFixed(6);
+        draft.longitude.text = p.longitude.toStringAsFixed(6);
+        if (!silent) error = null;
       });
       return true;
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted && !silent) setState(() => error = e.toString());
       return false;
     }
   }
@@ -143,31 +167,101 @@ class _CreateReportState extends State<CreateReport> {
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
-    final category = app.categories
+    final reportableCategories = app.categories
+        .where((c) => c.id != 'place')
+        .toList();
+    final category = reportableCategories
         .where((c) => c.id == draft.type)
         .firstOrNull;
+    final stepTitles = ['Qué ocurrió', 'Lugar y evidencia', 'Confirmar envío'];
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: navy,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          tooltip: 'Volver',
+          onPressed: busy ? null : () => Navigator.pop(context),
+          icon: const Icon(Icons.close_rounded, color: green),
+        ),
+        title: const Text(
+          'Nuevo reporte comunitario',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+        ),
+      ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                tooltip: 'Volver',
-                onPressed: busy ? null : () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: navy,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: green,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'PASO ${step + 1} DE 3',
+                          style: const TextStyle(
+                            color: navy,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          stepTitles[step],
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: List.generate(
+                      3,
+                      (index) => Expanded(
+                        child: Container(
+                          height: 5,
+                          margin: EdgeInsets.only(right: index < 2 ? 6 : 0),
+                          decoration: BoxDecoration(
+                            color: index <= step
+                                ? green
+                                : Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Publica desde un lugar seguro. Tu reporte alerta a los vecinos de tu zona.',
+                    style: TextStyle(color: Color(0xffb5c7d6), fontSize: 12.5),
+                  ),
+                ],
               ),
             ),
-            const PageHeading(
-              'Cuéntanos qué está pasando',
-              'Publica desde un lugar seguro. Tu reporte comienza como no verificado.',
-            ),
-            Text(
-              'PASO ${step + 1} DE 3 · ${['Qué ocurrió', 'Lugar y evidencia', 'Revisión'][step]}',
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 20),
             Form(
               key: form,
               child: Column(
@@ -177,7 +271,7 @@ class _CreateReportState extends State<CreateReport> {
                     ReportDescriptionStep(
                       draft: draft,
                       busy: busy,
-                      categories: app.categories,
+                      categories: reportableCategories,
                       analysis: analysis,
                       analyze: analyze,
                       onType: (value) => setState(() => draft.type = value),
@@ -186,11 +280,13 @@ class _CreateReportState extends State<CreateReport> {
                     ReportLocationStep(
                       draft: draft,
                       busy: busy,
-                      onLocate: locate,
+                      onLocate: () => locate(silent: false),
                       onPhoto: photo,
                       onPoint: (point) => setState(() {
-                        draft.latitude.text = '${point.latitude}';
-                        draft.longitude.text = '${point.longitude}';
+                        draft.latitude.text = point.latitude.toStringAsFixed(6);
+                        draft.longitude.text = point.longitude.toStringAsFixed(
+                          6,
+                        );
                       }),
                       onShare: (v) => setState(() => draft.shareContact = v),
                     ),
@@ -202,19 +298,29 @@ class _CreateReportState extends State<CreateReport> {
                       onReviewed: (value) =>
                           setState(() => draft.reviewed = value),
                     ),
-                  if (error != null) MessageCard(error!, error: true),
-                  const SizedBox(height: 22),
+                  if (error != null) ...[
+                    const SizedBox(height: 12),
+                    MessageCard(error!, error: true),
+                  ],
+                  const SizedBox(height: 24),
                   Row(
                     children: [
                       if (step > 0)
-                        OutlinedButton(
+                        OutlinedButton.icon(
                           onPressed: busy ? null : () => setState(() => step--),
-                          child: const Text('Atrás'),
+                          icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                          label: const Text('Atrás'),
                         ),
                       const Spacer(),
-                      FilledButton(
+                      FilledButton.icon(
                         onPressed: busy ? null : next,
-                        child: Text(
+                        icon: Icon(
+                          step == 2
+                              ? Icons.send_rounded
+                              : Icons.arrow_forward_rounded,
+                          size: 18,
+                        ),
+                        label: Text(
                           busy
                               ? 'Un momento…'
                               : step == 2

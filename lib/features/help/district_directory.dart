@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_scope.dart';
+import '../../core/theme.dart';
 import '../../shared/widgets.dart';
 
 class DistrictDirectory extends StatefulWidget {
@@ -64,34 +65,61 @@ class _DistrictDirectoryState extends State<DistrictDirectory> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Ayuda por distrito',
-              style: Theme.of(context).textTheme.titleLarge,
+              'Directorio telefónico por distrito',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
+            const SizedBox(height: 4),
             const Text(
-              'Líneas nacionales y contactos locales publicados por las entidades.',
-            ),
-            const SizedBox(height: 18),
-            DropdownButtonFormField<String>(
-              borderRadius: BorderRadius.circular(16),
-              initialValue: city,
-              decoration: const InputDecoration(labelText: 'Ciudad'),
-              items: const [
-                DropdownMenuItem(value: 'lima', child: Text('Lima y Callao')),
-                DropdownMenuItem(value: 'trujillo', child: Text('Trujillo')),
-              ],
-              onChanged: busy
-                  ? null
-                  : (value) {
-                      if (value == null) return;
-                      setState(() {
-                        city = value;
-                        district = value == 'lima' ? 'Lima' : 'Trujillo';
-                      });
-                      widget.onCityChange?.call(value);
-                      load();
-                    },
+              'Serenazgo y centrales municipales verificadas.',
+              style: TextStyle(fontSize: 13, color: Color(0xff64748b)),
             ),
             const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: const SizedBox(
+                      width: double.infinity,
+                      child: Text('Lima y Callao', textAlign: TextAlign.center),
+                    ),
+                    selected: city == 'lima',
+                    onSelected: busy
+                        ? null
+                        : (_) {
+                            setState(() {
+                              city = 'lima';
+                              district = 'Lima';
+                            });
+                            widget.onCityChange?.call('lima');
+                            load();
+                          },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ChoiceChip(
+                    label: const SizedBox(
+                      width: double.infinity,
+                      child: Text('Trujillo', textAlign: TextAlign.center),
+                    ),
+                    selected: city == 'trujillo',
+                    onSelected: busy
+                        ? null
+                        : (_) {
+                            setState(() {
+                              city = 'trujillo';
+                              district = 'Trujillo';
+                            });
+                            widget.onCityChange?.call('trujillo');
+                            load();
+                          },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               key: ValueKey('$city:${items.length}'),
               initialValue: matches.isEmpty ? null : district,
@@ -111,49 +139,62 @@ class _DistrictDirectoryState extends State<DistrictDirectory> {
                       if (value != null) setState(() => district = value);
                     },
             ),
-            if (busy) const LinearProgressIndicator(),
+            if (busy)
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: LinearProgressIndicator(),
+              ),
             if (error != null) ...[
-              MessageCard(error!, error: true),
-              TextButton(onPressed: load, child: const Text('Reintentar')),
+              const SizedBox(height: 12),
+              MessageCard(error!, error: true, onRetry: load),
             ],
             ...contacts.map(
-              (c) => Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(c['label'] as String),
-                      subtitle: Text(
-                        '${c['scope'] == 'distrital' ? district : 'Línea nacional'} · ${c['phone']}',
-                      ),
-                      trailing: const Icon(Icons.phone_outlined),
-                      onTap: () => launchUrl(
-                        Uri(scheme: 'tel', path: c['phone'] as String),
-                      ),
+              (c) => Container(
+                margin: const EdgeInsets.only(top: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xffe2e8f0)),
+                ),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: c['scope'] == 'distrital'
+                        ? green.withValues(alpha: 0.2)
+                        : navy.withValues(alpha: 0.1),
+                    child: Icon(
+                      Icons.phone_in_talk_rounded,
+                      color: c['scope'] == 'distrital'
+                          ? const Color(0xff166534)
+                          : navy,
+                      size: 20,
                     ),
-                    TextButton.icon(
-                      onPressed: () => launchUrl(
-                        Uri.parse(c['source_url'] as String),
-                        mode: LaunchMode.externalApplication,
-                      ),
-                      icon: const Icon(Icons.open_in_new, size: 14),
-                      label: const Text('Fuente institucional'),
+                  ),
+                  title: Text(
+                    c['label'] as String,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
                     ),
-                  ],
+                  ),
+                  subtitle: Text(
+                    '${c['scope'] == 'distrital' ? district : 'Línea nacional'} · ${c['phone']}',
+                  ),
+                  trailing: FilledButton.tonalIcon(
+                    onPressed: () => launchUrl(
+                      Uri(scheme: 'tel', path: c['phone'] as String),
+                    ),
+                    icon: const Icon(Icons.call_rounded, size: 16),
+                    label: const Text('Llamar'),
+                  ),
                 ),
               ),
             ),
             if (contacts.isNotEmpty &&
-                !contacts.any((c) => c['scope'] == 'distrital'))
+                !contacts.any((c) => c['scope'] == 'distrital')) ...[
+              const SizedBox(height: 12),
               const MessageCard(
                 'Las líneas nacionales están disponibles. El contacto municipal de este distrito está pendiente de contraste.',
               ),
-            if (contacts.isNotEmpty)
-              Text(
-                'Fuentes consultadas: ${contacts.first['reviewed_at']}. Harkai no llama ni avisa a emergencias automáticamente.',
-              ),
+            ],
           ],
         ),
       ),
