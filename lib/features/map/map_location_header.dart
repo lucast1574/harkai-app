@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/models.dart';
 import '../../shared/account_avatar.dart';
+import '../../shared/harkai_mark.dart';
 
 class MapLocationHeader extends StatelessWidget {
   final Account? account;
@@ -21,6 +22,7 @@ class MapLocationHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final resolved = district != null && district!.isNotEmpty;
     final locality = resolved
         ? [
@@ -31,11 +33,11 @@ class MapLocationHeader extends StatelessWidget {
         ? 'Ubicación actual'
         : 'Buscando ubicación';
     return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Material(
-          color: colors.surface.withValues(alpha: .86),
+          color: colors.surface.withValues(alpha: dark ? .58 : .66),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
             child: Row(
@@ -47,22 +49,7 @@ class MapLocationHeader extends StatelessWidget {
                     tooltip: 'Explorar Harkai',
                     onPressed: onExplore,
                     padding: EdgeInsets.zero,
-                    icon: ClipOval(
-                      child: SizedBox(
-                        width: 42,
-                        height: 42,
-                        child: OverflowBox(
-                          maxWidth: 68,
-                          maxHeight: 68,
-                          child: Image.asset(
-                            'assets/images/harkai_icon.png',
-                            width: 68,
-                            height: 68,
-                            semanticLabel: 'Harkai',
-                          ),
-                        ),
-                      ),
-                    ),
+                    icon: const HarkaiMark(),
                   ),
                 ),
                 Expanded(
