@@ -29,7 +29,7 @@ Los lugares de salud son permanentes y no se eliminan al caducar una alerta. Con
 
 ## Mapa y recorrido
 
-El panel inferior conserva tres posiciones de arrastre. Sus categorías son la entrada para reportar; Crimen agrupa robo, extorsión, secuestro, violencia y hechos graves, conservando el subtipo en la API y los filtros. Los reportes se consultan cada 30 segundos mientras el mapa está visible. GPS centra en la posición actual con zoom 16.5; el halo azul solo pulsa con una posición reciente y respeta reducir animaciones.
+El panel inferior tiene una posición colapsada y un máximo calculado con la altura real de sus controles, hasta el 65 % de la pantalla; no se puede estirar hasta dejar un gran espacio vacío. Sus categorías son la entrada para reportar; Crimen agrupa robo, extorsión, secuestro, violencia y hechos graves, conservando el subtipo en la API y los filtros. Los reportes se consultan cada 30 segundos mientras el mapa está visible. GPS centra en la posición actual con zoom 16.5; el halo azul solo pulsa con una posición reciente y respeta reducir animaciones.
 
 El seguimiento de alertas envía la última posición precisa (hasta 100 m y antigüedad máxima de dos minutos) a `PATCH /v1/me/devices/{id}/location`, con máximo un intento cada 30 segundos y reintentos automáticos. No guarda un historial de recorridos. Las suscripciones previas requieren activar el seguimiento explícitamente. Requiere desplegar la nueva ruta del backend antes de validar el circuito real. Las pruebas de transporte usan HTTP simulado, sin cuentas ni reportes de producción. FCM anuncia nuevos reportes por radio/preferencias; entrar en una zona con un reporte antiguo no vuelve a generar ese envío.
 
