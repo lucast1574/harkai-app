@@ -63,7 +63,6 @@ class ReportBrowser extends StatefulWidget {
 
 class _ReportBrowserState extends State<ReportBrowser> {
   MapTarget? selectedTarget;
-  bool ownOnly = false;
   @override
   void initState() {
     super.initState();
@@ -158,10 +157,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
 
   Future<int> load({bool more = false, bool background = false}) async {
     if (!mounted ||
-        (!widget.history &&
-            !ownOnly &&
-            userPosition == null &&
-            cachedPosition == null)) {
+        (!widget.history && userPosition == null && cachedPosition == null)) {
       return 0;
     }
     final version = ++generation;
@@ -190,8 +186,8 @@ class _ReportBrowserState extends State<ReportBrowser> {
         radius: radius,
         type: type,
         cursor: more ? cursor : null,
-        history: widget.history || ownOnly,
-        archive: !widget.homeMode && !ownOnly,
+        history: widget.history,
+        archive: !widget.homeMode,
         alerts: widget.alerts,
       );
       if (mounted && version == generation) {
@@ -427,7 +423,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
       MaterialPageRoute(
         builder: (_) => ReportDetail(
           id: i.id,
-          own: widget.history || ownOnly,
+          own: widget.history,
           onMap: widget.onMapTarget == null
               ? null
               : (report) {
@@ -734,15 +730,6 @@ class _ReportBrowserState extends State<ReportBrowser> {
                 },
                 onChanged: (v) {
                   setState(() => type = v);
-                  load();
-                },
-              ),
-            if (AppScope.of(context).account != null)
-              FilterChip(
-                label: const Text("Mis publicaciones"),
-                selected: ownOnly,
-                onSelected: (v) {
-                  setState(() => ownOnly = v);
                   load();
                 },
               ),

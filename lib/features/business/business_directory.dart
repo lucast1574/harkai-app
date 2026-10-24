@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_scope.dart';
 import '../../shared/widgets.dart';
 import '../location/location_service.dart';
+import '../auth/login_screen.dart';
 import '../map/map_target.dart';
 import 'business_point.dart';
 import 'business_editor.dart';
@@ -66,6 +67,27 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
     if (mounted) await load();
   }
 
+  Future<void> manageBusiness() async {
+    final app = AppScope.of(context);
+    if (app.account == null) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
+    if (!mounted || app.account == null) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          appBar: AppBar(title: const Text('Mi negocio')),
+          body: const BusinessDirectory(own: true),
+        ),
+      ),
+    );
+    if (mounted) await load();
+  }
+
   Future<void> toggle(BusinessPoint p) async {
     try {
       await AppScope.of(context).api.request(
@@ -95,6 +117,23 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
               ? 'Prepara tu punto y envíalo a revisión. La publicación requiere un pago vigente. Los pagos con Stripe están pendientes de habilitar.'
               : 'Negocios promocionados cerca de ti. Toca uno para verlo en el mapa.',
         ),
+        if (!widget.own)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Card(
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                leading: const Icon(Icons.add_business_outlined),
+                title: const Text('Pon tu negocio en el mapa'),
+                subtitle: const Text('Crea y administra tu punto promocionado'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: manageBusiness,
+              ),
+            ),
+          ),
         if (widget.own)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
