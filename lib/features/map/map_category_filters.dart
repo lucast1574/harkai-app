@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import 'map_glass_surface.dart';
 import '../reports/report_categories.dart';
 
 /// Filters reports around the current GPS position; never changes the area.
@@ -28,13 +29,10 @@ class MapCategoryFilters extends StatelessWidget {
           final type = index == 0 ? '' : mapReportTypes[index - 1];
           final visual = categoryVisual(type);
           final active = selected == type;
-          final background = active
-              ? (type.isEmpty ? navy : visual.color)
-              : colors.surface;
+          final dark = Theme.of(context).brightness == Brightness.dark;
           return Center(
-            child: Material(
-              color: background.withValues(alpha: .94),
-              borderRadius: BorderRadius.circular(24),
+            child: MapGlassSurface(
+              accent: active ? (type.isEmpty ? green : visual.color) : null,
               child: InkWell(
                 onTap: () => onChanged(type),
                 borderRadius: BorderRadius.circular(24),
@@ -53,7 +51,11 @@ class MapCategoryFilters extends StatelessWidget {
                           Icon(
                             visual.icon,
                             size: 17,
-                            color: active ? Colors.white : visual.color,
+                            color: active
+                                ? (dark ? Colors.white : visual.color)
+                                : dark
+                                ? Color.lerp(visual.color, Colors.white, .20)
+                                : visual.color,
                           ),
                           const SizedBox(width: 6),
                         ],
@@ -62,7 +64,7 @@ class MapCategoryFilters extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: active ? Colors.white : colors.onSurface,
+                            color: dark ? Colors.white : colors.onSurface,
                           ),
                         ),
                       ],
