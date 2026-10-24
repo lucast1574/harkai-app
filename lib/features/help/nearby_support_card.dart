@@ -4,7 +4,8 @@ import 'support_proximity.dart';
 
 class NearbySupportCard extends StatelessWidget {
   final List<NearbySupport> nearby;
-  const NearbySupportCard({super.key, required this.nearby});
+  final ValueChanged<SupportPlace>? onSelect;
+  const NearbySupportCard({super.key, required this.nearby, this.onSelect});
   @override
   Widget build(BuildContext context) {
     if (nearby.isEmpty) return const SizedBox.shrink();
@@ -22,15 +23,17 @@ class NearbySupportCard extends StatelessWidget {
           'Son puntos permanentes, no alertas.',
         ),
         isThreeLine: true,
-        onTap: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          builder: (_) => SafeArea(
-            child: SingleChildScrollView(
-              child: SupportPlaceDetails(place: first.place),
-            ),
-          ),
-        ),
+        onTap: onSelect != null
+            ? () => onSelect!(first.place)
+            : () => showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                builder: (_) => SafeArea(
+                  child: SingleChildScrollView(
+                    child: SupportPlaceDetails(place: first.place),
+                  ),
+                ),
+              ),
       ),
     );
   }

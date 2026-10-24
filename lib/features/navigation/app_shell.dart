@@ -6,12 +6,11 @@ import '../../shared/widgets.dart';
 import '../account/profile_screen.dart';
 import '../auth/login_screen.dart';
 import '../help/help_screen.dart';
-import '../help/support_place.dart';
 import '../reports/quick_report_sheet.dart';
 import '../reports/report_categories.dart';
 import '../../core/models.dart';
 import '../reports/report_browser.dart';
-import '../reports/report_detail.dart';
+import '../reports/report_repository.dart';
 import 'app_destinations.dart';
 import '../business/business_directory.dart';
 import '../business/business_point.dart';
@@ -160,6 +159,7 @@ class _AppShellState extends State<AppShell> {
 
   Widget homeMap() => ReportBrowser(
     mapTarget: mapTarget,
+    onCloseMapTarget: () => setState(() => mapTarget = null),
     homeMode: true,
     onOpenDrawer: openDestinations,
     onOpenProfile: openProfileOrLogin,
@@ -197,27 +197,27 @@ class _AppShellState extends State<AppShell> {
       app.pendingSupport = null;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && AppScope.of(context).account?.id == account.id) {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            builder: (_) => SafeArea(
-              child: SingleChildScrollView(
-                child: SupportPlaceDetails(place: support),
-              ),
-            ),
-          );
+          showOnMap(MapTarget.place(support));
         }
       });
     }
     final pending = app.pendingReport;
     if (pending != null && account != null && !app.loading) {
       app.pendingReport = null;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && AppScope.of(context).account?.id == account.id) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => ReportDetail(id: pending)),
-          );
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        try {
+          final report = await ReportRepository(app.api).find(pending);
+          if (mounted && app.account?.id == account.id) {
+            showOnMap(MapTarget.report(report));
+          }
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(this.context).showSnackBar(
+              const SnackBar(
+                content: Text('Este reporte ya no está disponible.'),
+              ),
+            );
+          }
         }
       });
     }

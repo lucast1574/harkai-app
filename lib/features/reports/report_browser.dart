@@ -29,6 +29,7 @@ import 'map_report_sheet.dart';
 class ReportBrowser extends StatefulWidget {
   final String title, fixedType;
   final MapTarget? mapTarget;
+  final VoidCallback? onCloseMapTarget;
   final ValueChanged<MapTarget>? onMapTarget;
   final bool history, alerts, showMap, homeMode;
   final VoidCallback? onOpenDrawer;
@@ -41,6 +42,7 @@ class ReportBrowser extends StatefulWidget {
   const ReportBrowser({
     super.key,
     this.mapTarget,
+    this.onCloseMapTarget,
     this.onMapTarget,
     this.title = 'El pulso de tu zona',
     this.fixedType = '',
@@ -560,8 +562,10 @@ class _ReportBrowserState extends State<ReportBrowser> {
                         ),
                         IconButton(
                           tooltip: "Cerrar ficha",
-                          onPressed: () =>
-                              setState(() => selectedTarget = null),
+                          onPressed: () {
+                            setState(() => selectedTarget = null);
+                            widget.onCloseMapTarget?.call();
+                          },
                           icon: const Icon(Icons.close),
                         ),
                       ],
@@ -746,7 +750,13 @@ class _ReportBrowserState extends State<ReportBrowser> {
           ],
           if (supportEnabled)
             CoverageNotice(covered: covered, error: coverageError),
-          if (supportEnabled) NearbySupportCard(nearby: nearby),
+          if (supportEnabled)
+            NearbySupportCard(
+              nearby: nearby,
+              onSelect: widget.onMapTarget == null
+                  ? null
+                  : (p) => widget.onMapTarget!(MapTarget.place(p)),
+            ),
           if (supportError != null) MessageCard(supportError!, error: true),
           if (isPlacesDirectory && supportPlaces.isNotEmpty) ...[
             const SizedBox(height: 12),
