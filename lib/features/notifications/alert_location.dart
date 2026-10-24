@@ -12,6 +12,7 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
   final Stream<Position> Function(LocationSettings) watch;
   final DateTime Function() now;
   final Future<void> Function(Position)? onSynced;
+  final Future<void> Function(List<dynamic>)? onBusinessNotices;
   StreamSubscription<Position>? _positions;
   Timer? _timer;
   Position? _latest, _sent;
@@ -27,6 +28,7 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
     this.watch = watchAlertPositions,
     this.now = DateTime.now,
     this.onSynced,
+    this.onBusinessNotices,
   }) {
     WidgetsBinding.instance.addObserver(this);
   }
@@ -121,16 +123,30 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
     _lastAttempt = now();
     final version = _generation;
     try {
-      await api.request(
+      final response = await api.request(
         'PATCH',
         'me/devices/$id/location',
-        body: {'latitude': position.latitude, 'longitude': position.longitude},
+        body: {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+          'accuracy': position.accuracy,
+          'observed_at': position.timestamp.toUtc().toIso8601String(),
+        },
       );
       if (version != _generation || id != device()) return false;
       lastSync = now();
       _sent = position;
       error = null;
       await onSynced?.call(position);
+      if (version == _generation && id == device()) {
+        try {
+          await onBusinessNotices?.call(
+            response["business_notices"] as List? ?? [],
+          );
+        } catch (_) {
+          /* Pending notices are retried on the next location update. */
+        }
+      }
       notifyListeners();
       return true;
     } catch (_) {

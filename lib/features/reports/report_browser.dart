@@ -1,10 +1,13 @@
 import 'dart:async';
+import '../map/map_target.dart';
+import '../business/business_point.dart';
+import '../../shared/app_choice_field.dart';
+import 'report_categories.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/app_scope.dart';
 import '../../core/models.dart';
-import '../../core/theme.dart';
 import '../../shared/widgets.dart';
 import '../map/map_location_header.dart';
 import '../map/map_category_filters.dart';
@@ -25,6 +28,8 @@ import 'map_report_sheet.dart';
 
 class ReportBrowser extends StatefulWidget {
   final String title, fixedType;
+  final MapTarget? mapTarget;
+  final ValueChanged<MapTarget>? onMapTarget;
   final bool history, alerts, showMap, homeMode;
   final VoidCallback? onOpenDrawer;
   final VoidCallback? onOpenProfile;
@@ -35,6 +40,8 @@ class ReportBrowser extends StatefulWidget {
 
   const ReportBrowser({
     super.key,
+    this.mapTarget,
+    this.onMapTarget,
     this.title = 'El pulso de tu zona',
     this.fixedType = '',
     this.history = false,
@@ -53,6 +60,22 @@ class ReportBrowser extends StatefulWidget {
 }
 
 class _ReportBrowserState extends State<ReportBrowser> {
+  MapTarget? selectedTarget;
+  bool ownOnly = false;
+  @override
+  void initState() {
+    super.initState();
+    selectedTarget = widget.mapTarget;
+  }
+
+  @override
+  void didUpdateWidget(covariant ReportBrowser oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.mapTarget != widget.mapTarget) {
+      selectedTarget = widget.mapTarget;
+    }
+  }
+
   bool? covered;
   String? coverageError;
   LatLng? userPosition;
@@ -82,6 +105,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
   LatLng center = const LatLng(-12.0464, -77.0428);
   int radius = 1000;
   String type = '';
+  List<BusinessPoint> businesses = [];
   List<Incident> items = [];
   List<SupportPlace> supportPlaces = [];
   String? supportError;
@@ -104,7 +128,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
       location = ForegroundLocation(
         track: !widget.history,
         onPosition: acceptPosition,
-        onCachedPosition: widget.homeMode ? acceptCachedPosition : null,
+        onCachedPosition: acceptCachedPosition,
         onError: (e) {
           if (mounted) setState(() => error = e.toString());
           return false;
@@ -132,7 +156,10 @@ class _ReportBrowserState extends State<ReportBrowser> {
 
   Future<int> load({bool more = false, bool background = false}) async {
     if (!mounted ||
-        (!widget.history && userPosition == null && cachedPosition == null)) {
+        (!widget.history &&
+            !ownOnly &&
+            userPosition == null &&
+            cachedPosition == null)) {
       return 0;
     }
     final version = ++generation;
@@ -153,13 +180,16 @@ class _ReportBrowserState extends State<ReportBrowser> {
       return 0;
     }
     try {
+      if (widget.homeMode) unawaited(loadBusinesses(version));
+      if (!mounted || version != generation) return 0;
       final page = await ReportRepository(AppScope.of(context).api).list(
         latitude: center.latitude,
         longitude: center.longitude,
         radius: radius,
         type: type,
         cursor: more ? cursor : null,
-        history: widget.history,
+        history: widget.history || ownOnly,
+        archive: !widget.homeMode && !ownOnly,
         alerts: widget.alerts,
       );
       if (mounted && version == generation) {
@@ -181,6 +211,25 @@ class _ReportBrowserState extends State<ReportBrowser> {
     }
     await supportLoad;
     return items.length;
+  }
+
+  Future<void> loadBusinesses(int version) async {
+    try {
+      final data = await AppScope.of(context).api.request(
+        'GET',
+        'businesses?lat=${center.latitude}&lng=${center.longitude}&radius_meters=$radius&limit=100',
+        authenticated: false,
+      );
+      if (mounted && version == generation) {
+        setState(
+          () => businesses = (data['items'] as List)
+              .map((p) => BusinessPoint(p as Map<String, dynamic>))
+              .toList(),
+        );
+      }
+    } catch (_) {
+      /* Independent of community alerts. */
+    }
   }
 
   Future<int> loadSupport() async {
@@ -374,7 +423,16 @@ class _ReportBrowserState extends State<ReportBrowser> {
   Future<bool> open(Incident i) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ReportDetail(id: i.id, own: widget.history),
+        builder: (_) => ReportDetail(
+          id: i.id,
+          own: widget.history || ownOnly,
+          onMap: widget.onMapTarget == null
+              ? null
+              : (report) {
+                  Navigator.pop(context);
+                  widget.onMapTarget!(MapTarget.report(report));
+                },
+        ),
       ),
     );
     if (mounted) await load();
@@ -415,9 +473,22 @@ class _ReportBrowserState extends State<ReportBrowser> {
                     const Duration(minutes: 2),
             center: center,
             userPosition: userPosition ?? cachedPosition,
-            incidents: items,
+            incidents: [
+              ...items,
+              if (selectedTarget?.incident != null &&
+                  !items.any((i) => i.id == selectedTarget!.id))
+                selectedTarget!.incident!,
+            ],
             supportPlaces: supportPlaces,
-            onReport: open,
+            businesses: businesses,
+            onBusiness: (p) =>
+                setState(() => selectedTarget = MapTarget.business(p)),
+            target: selectedTarget?.point,
+            selectedId: selectedTarget?.id,
+            onSupport: (p) =>
+                setState(() => selectedTarget = MapTarget.place(p)),
+            onReport: (i) =>
+                setState(() => selectedTarget = MapTarget.report(i)),
           ),
         ),
         Positioned(
@@ -464,46 +535,150 @@ class _ReportBrowserState extends State<ReportBrowser> {
             onTap: locating ? () {} : locate,
           ),
         ),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: NotificationListener<DraggableScrollableNotification>(
-            onNotification: (notification) {
-              if ((sheetExtent - notification.extent).abs() > .005) {
-                setState(() => sheetExtent = notification.extent);
-              }
-              return false;
-            },
-            child: MapReportSheet(
-              onReport: (category) => triggerCreate(categoryId: category),
-              onEmergency: showEmergencyDialer,
-              onHelp: () => widget.onOpenHelp?.call(),
-              children: [
-                if (app.loading) const LinearProgressIndicator(minHeight: 2),
-                if (app.error != null)
-                  MessageCard(
-                    'No se pudo actualizar la conexión.',
-                    error: true,
-                    onRetry: app.initialize,
-                  ),
-                if (error != null)
-                  MessageCard(error!, error: true, onRetry: () => load()),
-                if (userPosition == null)
-                  TextButton.icon(
-                    onPressed: locating ? null : locate,
-                    icon: const Icon(Icons.my_location_rounded),
-                    label: const Text('Activar mi ubicación'),
-                  ),
-              ],
+        if (selectedTarget != null)
+          Positioned(
+            left: 14,
+            right: 14,
+            bottom: 14,
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            selectedTarget!.support != null ||
+                                    selectedTarget!.businessPoint != null
+                                ? selectedTarget!.title
+                                : "${crimeTypes.contains(selectedTarget!.incident!.type) ? 'Crimen · ' : ''}${AppScope.of(context).categoryLabel(selectedTarget!.incident!.type)}",
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: "Cerrar ficha",
+                          onPressed: () =>
+                              setState(() => selectedTarget = null),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    if (selectedTarget!.incident?.mediaId != null ||
+                        selectedTarget!.businessPoint?.data["media_id"]
+                                is String &&
+                            (selectedTarget!.businessPoint!.data["media_id"]
+                                    as String)
+                                .isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            app.api.photoUrl(
+                              selectedTarget!.incident?.mediaId ??
+                                  selectedTarget!
+                                          .businessPoint!
+                                          .data["media_id"]
+                                      as String,
+                            ),
+                            height: 100,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, e, s) => const SizedBox.shrink(),
+                          ),
+                        ),
+                      ),
+                    if (selectedTarget!.businessPoint != null)
+                      Text(
+                        "Promocionado · ${businessKinds[selectedTarget!.businessPoint!.data["kind"]] ?? "Negocio"}",
+                      ),
+                    Text(
+                      selectedTarget!.title,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Text(
+                      "Línea de referencia desde tu ubicación",
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        final target = selectedTarget!;
+                        if (target.incident != null) {
+                          open(target.incident!);
+                        } else {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            builder: (_) => SafeArea(
+                              child: SingleChildScrollView(
+                                child: target.businessPoint != null
+                                    ? BusinessDetails(
+                                        point: target.businessPoint!,
+                                      )
+                                    : SupportPlaceDetails(
+                                        place: target.support!,
+                                      ),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.open_in_full),
+                      label: Text(
+                        selectedTarget!.incident != null
+                            ? "Ver publicación y comentarios"
+                            : "Ver información",
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
+        if (selectedTarget == null)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: NotificationListener<DraggableScrollableNotification>(
+              onNotification: (notification) {
+                if ((sheetExtent - notification.extent).abs() > .005) {
+                  setState(() => sheetExtent = notification.extent);
+                }
+                return false;
+              },
+              child: MapReportSheet(
+                onReport: (category) => triggerCreate(categoryId: category),
+                onEmergency: showEmergencyDialer,
+                onHelp: () => widget.onOpenHelp?.call(),
+                children: [
+                  if (app.loading) const LinearProgressIndicator(minHeight: 2),
+                  if (app.error != null)
+                    MessageCard(
+                      'No se pudo actualizar la conexión.',
+                      error: true,
+                      onRetry: app.initialize,
+                    ),
+                  if (error != null)
+                    MessageCard(error!, error: true, onRetry: () => load()),
+                  if (userPosition == null)
+                    TextButton.icon(
+                      onPressed: locating ? null : locate,
+                      icon: const Icon(Icons.my_location_rounded),
+                      label: const Text('Activar mi ubicación'),
+                    ),
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }
 
   Widget _buildSecondaryFeedExperience(BuildContext context) {
     final isPlacesDirectory = widget.fixedType == 'place';
-    final isPetsSection = widget.fixedType == 'pet';
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -527,35 +702,48 @@ class _ReportBrowserState extends State<ReportBrowser> {
             const SizedBox(height: 14),
           ],
 
-          // Dedicated Action Button ONLY for Pets (Places are permanent on the map!)
-          if (isPetsSection && widget.onCreateReport != null) ...[
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => triggerCreate(categoryId: 'pet'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: categoryVisual('pet').color,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  elevation: 3,
-                ),
-                icon: const CategoryGlyph(
-                  type: 'pet',
-                  size: 20,
-                  color: Colors.white,
-                ),
-                label: const Text(
-                  'Reportar mascota perdida o encontrada',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5),
-                ),
-              ),
+          if (widget.fixedType.isEmpty) ...[
+            AppChoiceField(
+              label: "Tipo de alerta",
+              value: crimeTypes.contains(type) ? "crime" : type,
+              options: {
+                "": "Todas las alertas",
+                "crime": "Crimen",
+                "fire": "Incendios",
+                "emergency": "Emergencias",
+                "crash": "Accidentes",
+                "pet": "Mascotas",
+              },
+              onChanged: (v) {
+                setState(() => type = v);
+                load();
+              },
             ),
+            if (type == "crime" || crimeTypes.contains(type))
+              AppChoiceField(
+                label: "Subcategoría de crimen",
+                value: type,
+                options: {
+                  "crime": "Todas",
+                  for (final t in crimeTypes)
+                    t: AppScope.of(context).categoryLabel(t),
+                },
+                onChanged: (v) {
+                  setState(() => type = v);
+                  load();
+                },
+              ),
+            if (AppScope.of(context).account != null)
+              FilterChip(
+                label: const Text("Mis publicaciones"),
+                selected: ownOnly,
+                onSelected: (v) {
+                  setState(() => ownOnly = v);
+                  load();
+                },
+              ),
             const SizedBox(height: 16),
           ],
-
           if (supportEnabled)
             CoverageNotice(covered: covered, error: coverageError),
           if (supportEnabled) NearbySupportCard(nearby: nearby),
@@ -569,7 +757,12 @@ class _ReportBrowserState extends State<ReportBrowser> {
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 10),
-            SupportPlaceList(places: supportPlaces),
+            SupportPlaceList(
+              places: supportPlaces,
+              onSelect: widget.onMapTarget == null
+                  ? null
+                  : (p) => widget.onMapTarget!(MapTarget.place(p)),
+            ),
           ],
           if (userPosition == null && !widget.history)
             TextButton.icon(
@@ -588,7 +781,14 @@ class _ReportBrowserState extends State<ReportBrowser> {
               ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
-            ...items.map((i) => ReportTile(incident: i, onTap: () => open(i))),
+            ...items.map(
+              (i) => ReportTile(
+                incident: i,
+                onTap: () => widget.onMapTarget != null
+                    ? widget.onMapTarget!(MapTarget.report(i))
+                    : open(i),
+              ),
+            ),
             if (busy)
               const Padding(
                 padding: EdgeInsets.all(25),
@@ -596,7 +796,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
               ),
             if (!busy && error == null && items.isEmpty)
               const MessageCard(
-                'Aún no hay reportes cercanos. Puedes publicar lo que está pasando.',
+                'No hay publicaciones para estos filtros. Los nuevos reportes se crean desde el mapa.',
               ),
             if (cursor != null)
               OutlinedButton(

@@ -13,6 +13,9 @@ import '../../core/models.dart';
 import '../reports/report_browser.dart';
 import '../reports/report_detail.dart';
 import 'app_destinations.dart';
+import '../business/business_directory.dart';
+import '../business/business_point.dart';
+import '../map/map_target.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -23,6 +26,15 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   final scaffold = GlobalKey<ScaffoldState>();
   int section = 0;
+  MapTarget? mapTarget;
+  void showOnMap(MapTarget target) {
+    setState(() {
+      mapTarget = target;
+      section = 0;
+      sectionHistory.clear();
+    });
+  }
+
   final sectionHistory = <int>[];
 
   void selectSection(int value) {
@@ -64,7 +76,7 @@ class _AppShellState extends State<AppShell> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
             ),
-            for (final index in [2, 3, 5, 6, 7])
+            for (final index in [2, 3, 4, 5])
               ListTile(
                 leading: Icon(AppDestinations.entries[index].$1),
                 title: Text(AppDestinations.entries[index].$2),
@@ -119,51 +131,39 @@ class _AppShellState extends State<AppShell> {
     if (AppScope.of(context).account == null) {
       if (!await login()) return;
     }
-    if (mounted) selectSection(8);
+    if (mounted) selectSection(6);
   }
 
   Widget page() => switch (section) {
     1 => ReportBrowser(
       title: 'Reportes de la comunidad',
       showMap: false,
-      onCreateReport: create,
+      onMapTarget: showOnMap,
     ),
     2 => ReportBrowser(
       title: 'Mascotas perdidas y encontradas',
       fixedType: 'pet',
       showMap: false,
-      onCreateReport: create,
+      onMapTarget: showOnMap,
     ),
-    3 => const ReportBrowser(
+    3 => ReportBrowser(
       title: 'Lugares de ayuda y salud',
       fixedType: 'place',
-    ),
-    4 => const ReportBrowser(
-      title: 'Mis alertas',
-      alerts: true,
       showMap: false,
+      onMapTarget: showOnMap,
     ),
-    5 => ReportBrowser(
-      title: 'Mis reportes',
-      history: true,
-      showMap: false,
-      onCreateReport: create,
-    ),
-    6 => ReportBrowser(
-      title: 'Actualidad de tu comunidad',
-      showMap: false,
-      onCreateReport: create,
-    ),
-    7 => const HelpScreen(),
-    8 => const ProfileScreen(),
+    4 => BusinessDirectory(onMap: showOnMap),
+    5 => const HelpScreen(),
+    6 => const ProfileScreen(),
     _ => homeMap(),
   };
 
   Widget homeMap() => ReportBrowser(
+    mapTarget: mapTarget,
     homeMode: true,
     onOpenDrawer: openDestinations,
     onOpenProfile: openProfileOrLogin,
-    onOpenHelp: () => selectSection(7),
+    onOpenHelp: () => selectSection(5),
     onSelectSection: selectSection,
     onCreateReport: create,
   );
@@ -172,6 +172,26 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
     final account = app.account;
+    final business = app.pendingBusiness;
+    if (business != null && account != null && !app.loading) {
+      app.pendingBusiness = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        try {
+          final data = await app.api.request("GET", "businesses/$business");
+          if (mounted && app.account?.id == account.id) {
+            showOnMap(MapTarget.business(BusinessPoint(data)));
+          }
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(this.context).showSnackBar(
+              const SnackBar(
+                content: Text("Este negocio ya no está disponible."),
+              ),
+            );
+          }
+        }
+      });
+    }
     final support = app.pendingSupport;
     if (support != null && account != null && !app.loading) {
       app.pendingSupport = null;
@@ -239,7 +259,7 @@ class _AppShellState extends State<AppShell> {
         body: isHomeMap
             ? KeyedSubtree(key: const ValueKey('home-map'), child: homeMap())
             : SafeArea(
-                child: account == null && [4, 5, 8].contains(section)
+                child: account == null && [6].contains(section)
                     ? Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
@@ -266,11 +286,10 @@ class _AppShellState extends State<AppShell> {
         bottomNavigationBar: NavigationBar(
           selectedIndex: switch (section) {
             0 => 0,
-            4 => 2,
-            8 => 0,
+            6 => 0,
             _ => 1,
           },
-          onDestinationSelected: (index) => selectSection([0, 1, 4][index]),
+          onDestinationSelected: (index) => selectSection([0, 1][index]),
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.map_outlined),
@@ -282,28 +301,8 @@ class _AppShellState extends State<AppShell> {
               selectedIcon: Icon(Icons.view_agenda_rounded),
               label: 'Comunidad',
             ),
-            NavigationDestination(
-              icon: Icon(Icons.notifications_none_rounded),
-              selectedIcon: Icon(Icons.notifications_rounded),
-              label: 'Alertas',
-            ),
           ],
         ),
-        floatingActionButton: isHomeMap || [3, 4, 7, 8].contains(section)
-            ? null
-            : FloatingActionButton.extended(
-                heroTag: 'report',
-                backgroundColor: green,
-                foregroundColor: navy,
-                onPressed: app.loading || app.error != null
-                    ? null
-                    : () => create(initialType: section == 2 ? 'pet' : null),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text(
-                  'Reportar',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
       ),
     );
   }

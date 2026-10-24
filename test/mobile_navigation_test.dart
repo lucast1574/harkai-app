@@ -41,10 +41,12 @@ void main() {
     );
     await tester.pump();
     expect(find.byType(Drawer), findsNothing);
+    expect(find.text('Alertas'), findsNothing);
+    expect(find.byType(FloatingActionButton), findsNothing);
     expect(find.text('Cuenta'), findsNothing);
     expect(
       tester.widget<NavigationBar>(find.byType(NavigationBar)).destinations,
-      hasLength(3),
+      hasLength(2),
     );
     await tester.tap(find.text('Comunidad').last);
     await tester.pump(const Duration(milliseconds: 400));
@@ -57,6 +59,29 @@ void main() {
     expect(find.byType(AppShell), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
+  testWidgets(
+    'a directory destination draws a reference line on the primary map',
+    (tester) async {
+      const user = LatLng(-12.04, -77.04), target = LatLng(-12.041, -77.041);
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SizedBox(
+            height: 700,
+            child: CommunityMap(
+              center: user,
+              userPosition: user,
+              target: target,
+              initialZoom: 16,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      final layer = tester.widget<PolylineLayer>(find.byType(PolylineLayer));
+      expect(layer.polylines.single.points, [user, target]);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   test('dark sheets and focused inputs stay in the navy palette', () {
     final theme = appTheme(Brightness.dark);
     expect(theme.bottomSheetTheme.backgroundColor, theme.colorScheme.surface);

@@ -112,6 +112,21 @@ class ReportTile extends StatelessWidget {
                   ),
                 ],
               ),
+              if (incident.mediaId != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      AppScope.of(context).api.photoUrl(incident.mediaId!),
+                      height: 170,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, error, stack) =>
+                          const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 12),
               Text(
                 incident.description,

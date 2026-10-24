@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../business/business_directory.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_scope.dart';
 import '../../core/models.dart';
@@ -17,7 +18,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final form = GlobalKey<FormState>();
   final name = TextEditingController(), radius = TextEditingController();
   String notifications = 'all', language = 'es', theme = 'system';
-  bool initialized = false, busy = false;
+  bool initialized = false, busy = false, businessNotifications = false;
   String? error, message;
   @override
   void didChangeDependencies() {
@@ -30,6 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         notifications = user.preferences.notifications;
         language = user.preferences.language;
         theme = user.preferences.theme;
+        businessNotifications = user.preferences.businessNotifications;
         initialized = true;
       }
     }
@@ -57,6 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'me/preferences',
         body: Preferences(
           notifications: notifications,
+          businessNotifications: businessNotifications,
           radius: int.parse(radius.text),
           language: language,
           theme: theme,
@@ -267,6 +270,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                     onChanged: (value) => setState(() => theme = value),
                   ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text("Negocios cercanos"),
+                    subtitle: const Text(
+                      "Recibir avisos promocionados al acercarme. Requiere alertas durante mi recorrido.",
+                    ),
+                    value: businessNotifications,
+                    onChanged: busy
+                        ? null
+                        : (v) => setState(() => businessNotifications = v),
+                  ),
                   if (error != null) MessageCard(error!, error: true),
                   if (message != null)
                     Padding(
@@ -290,6 +304,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 12),
           NotificationSettings(key: ValueKey(user.id)),
+          ListTile(
+            leading: const Icon(Icons.storefront_outlined),
+            title: const Text("Mi negocio"),
+            subtitle: const Text(
+              "Registrar y administrar puntos promocionados",
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => Scaffold(
+                  appBar: AppBar(title: const Text("Mi negocio")),
+                  body: const BusinessDirectory(own: true),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 20),
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 8),

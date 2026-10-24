@@ -86,10 +86,6 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
 
   Future<bool> publish() async {
     if (busy || voiceBusy || !form.currentState!.validate()) return false;
-    if (pet && mediaId == null) {
-      setState(() => error = 'Añade una foto de la mascota antes de publicar.');
-      return false;
-    }
     final app = AppScope.of(context);
     final owner = app.account?.id;
     setState(() {
@@ -239,38 +235,53 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
                         ],
                       ),
                     ),
-                    if (pet) ...[
+                    ...[
                       const SizedBox(height: 12),
                       OutlinedButton.icon(
                         onPressed: busy ? null : photo,
                         icon: const Icon(Icons.add_a_photo_outlined),
                         label: Text(
                           photoName == null
-                              ? 'Añadir foto de la mascota'
+                              ? 'Añadir foto opcional'
                               : 'Foto adjunta',
                         ),
                       ),
-                      TextFormField(
-                        controller: contact,
-                        enabled: !busy,
-                        decoration: const InputDecoration(
-                          labelText: 'Contacto para ayudar',
+                      if (mediaId != null)
+                        TextButton(
+                          onPressed: busy
+                              ? null
+                              : () => setState(() {
+                                  mediaId = null;
+                                  photoName = null;
+                                }),
+                          child: const Text("Quitar foto"),
                         ),
-                        validator: (value) => (value?.trim().length ?? 0) < 6
-                            ? 'Añade un contacto de al menos 6 caracteres.'
-                            : null,
-                      ),
-                      CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        value: share,
-                        onChanged: busy
-                            ? null
-                            : (value) => setState(() => share = value ?? false),
-                        title: const Text(
-                          'Acepto mostrar este contacto en mi reporte',
-                          style: TextStyle(fontSize: 12),
+                      if (pet)
+                        TextFormField(
+                          controller: contact,
+                          enabled: !busy,
+                          decoration: const InputDecoration(
+                            labelText: 'Contacto opcional para ayudar',
+                          ),
+                          validator: (value) =>
+                              (value?.trim().isNotEmpty ?? false) &&
+                                  (value?.trim().length ?? 0) < 6
+                              ? 'Añade un contacto de al menos 6 caracteres.'
+                              : null,
                         ),
-                      ),
+                      if (pet)
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          value: share,
+                          onChanged: busy
+                              ? null
+                              : (value) =>
+                                    setState(() => share = value ?? false),
+                          title: const Text(
+                            'Acepto mostrar este contacto en mi reporte',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
                     ],
                     if (error != null) MessageCard(error!, error: true),
                     const SizedBox(height: 16),

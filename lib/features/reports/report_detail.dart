@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_scope.dart';
@@ -8,13 +7,18 @@ import '../../core/theme.dart';
 import '../../shared/widgets.dart';
 import '../auth/login_screen.dart';
 import '../community/report_comments.dart';
-import '../map/community_map.dart';
 import 'report_repository.dart';
 
 class ReportDetail extends StatefulWidget {
   final String id;
   final bool own;
-  const ReportDetail({super.key, required this.id, this.own = false});
+  final ValueChanged<Incident>? onMap;
+  const ReportDetail({
+    super.key,
+    required this.id,
+    this.own = false,
+    this.onMap,
+  });
   @override
   State<ReportDetail> createState() => _ReportDetailState();
 }
@@ -252,13 +256,12 @@ class _ReportDetailState extends State<ReportDetail> {
                     ),
                   ),
                 ),
-              SizedBox(
-                height: 260,
-                child: CommunityMap(
-                  center: LatLng(i.latitude, i.longitude),
-                  incidents: [i],
+              if (widget.onMap != null)
+                OutlinedButton.icon(
+                  onPressed: () => widget.onMap!(i),
+                  icon: const Icon(Icons.near_me_outlined),
+                  label: const Text('Ver en el mapa'),
                 ),
-              ),
               const SizedBox(height: 16),
               if (app.categories
                       .where((c) => c.id == i.type)

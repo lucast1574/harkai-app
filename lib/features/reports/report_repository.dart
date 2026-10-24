@@ -15,6 +15,7 @@ class ReportRepository {
     String? cursor,
     bool history = false,
     bool alerts = false,
+    bool archive = false,
   }) async {
     if (type == 'crime') {
       final cursors = cursor == null
@@ -34,6 +35,7 @@ class ReportRepository {
             cursor: cursors?[category] as String?,
             history: history,
             alerts: alerts,
+            archive: archive,
           ),
         ),
       );
@@ -68,6 +70,8 @@ class ReportRepository {
             ? 'me/incidents'
             : alerts
             ? 'alerts'
+            : archive
+            ? 'archive/incidents'
             : 'incidents'}?$query',
         authenticated: history || alerts,
       ),

@@ -1,20 +1,24 @@
 class Preferences {
   final String notifications, language, theme;
   final int radius;
+  final bool businessNotifications;
   const Preferences({
     this.notifications = 'all',
+    this.businessNotifications = false,
     this.radius = 500,
     this.language = 'es',
     this.theme = 'system',
   });
   factory Preferences.fromJson(Map<String, dynamic> json) => Preferences(
     notifications: json['notifications'] as String,
+    businessNotifications: json['business_notifications'] == true,
     radius: json['radius_meters'] as int,
     language: json['language'] as String,
     theme: json['theme'] as String,
   );
   Map<String, dynamic> toJson() => {
     'notifications': notifications,
+    'business_notifications': businessNotifications,
     'radius_meters': radius,
     'language': language,
     'theme': theme,

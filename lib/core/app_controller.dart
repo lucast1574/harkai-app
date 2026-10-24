@@ -10,10 +10,12 @@ import 'models.dart';
 class AppController extends ChangeNotifier {
   final ApiClient api;
   Account? account;
-  String? pendingReport;
+  String? pendingReport, pendingBusiness;
   SupportPlace? pendingSupport;
   late final notifications = NotificationService(api, () => account?.id, (id) {
-    if (id.startsWith('support:')) {
+    if (id.startsWith('business:')) {
+      pendingBusiness = id.substring(9);
+    } else if (id.startsWith('support:')) {
       try {
         pendingSupport = SupportPlace.fromJson(
           jsonDecode(id.substring(8)) as Map<String, dynamic>,
@@ -147,6 +149,7 @@ class AppController extends ChangeNotifier {
     await api.logout();
     await notifications.stop();
     pendingReport = null;
+    pendingBusiness = null;
     pendingSupport = null;
     account = null;
     notifyListeners();

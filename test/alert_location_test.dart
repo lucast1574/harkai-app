@@ -59,6 +59,13 @@ void main() {
       expect(requests.single.url.path, '/v1/me/devices/device/location');
       expect(requests.single.headers['Authorization'], 'Bearer test');
       expect(jsonDecode(requests.single.body)['latitude'], -12.04);
+      expect(jsonDecode(requests.single.body)['accuracy'], 10);
+      expect(
+        DateTime.parse(
+          jsonDecode(requests.single.body)['observed_at'] as String,
+        ),
+        now,
+      );
       stream.add(position(now, latitude: -12.03));
       await Future<void>.delayed(Duration.zero);
       expect(await tracker.sync(), false);

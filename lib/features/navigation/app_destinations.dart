@@ -7,9 +7,7 @@ abstract final class AppDestinations {
     (Icons.view_agenda_outlined, 'Comunidad'),
     (Icons.pets_outlined, 'Mascotas'),
     (Icons.location_on_outlined, 'Lugares de ayuda'),
-    (Icons.notifications_outlined, 'Mis alertas'),
-    (Icons.history_rounded, 'Mis reportes'),
-    (Icons.newspaper_outlined, 'Actualidad'),
+    (Icons.storefront_outlined, 'Negocios cercanos'),
     (Icons.support_agent_rounded, 'Harki y ayuda'),
     (Icons.person_outline, 'Mi cuenta'),
   ];

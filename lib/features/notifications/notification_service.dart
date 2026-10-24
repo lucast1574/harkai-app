@@ -22,6 +22,27 @@ class NotificationService {
     () => enabled && subscription?['live_location'] == true
         ? (subscription?['device'] as String?)
         : null,
+    onBusinessNotices: (notices) async {
+      final owner = currentUser();
+      final version = generation;
+      for (final raw in notices) {
+        if (owner != currentUser() || version != generation || !enabled) return;
+        final n = raw as Map<String, dynamic>;
+        final id = n["id"] as String?;
+        final point = n["point_id"] as String?;
+        if (id == null ||
+            !RegExp(r"^[a-f0-9]{64}$").hasMatch(id) ||
+            !validReportID(point)) {
+          continue;
+        }
+        await display.showBusiness(
+          point!,
+          n["name"] as String? ?? "Negocio cercano",
+        );
+        if (owner != currentUser() || version != generation || !enabled) return;
+        await api.request("POST", "me/business-notices/$id/ack");
+      }
+    },
     onSynced: (position) async {
       final saved = subscription;
       if (saved == null || !enabled) return;
@@ -174,7 +195,9 @@ class NotificationService {
   bool open(dynamic id) =>
       currentUser() != null &&
       id is String &&
-      (validReportID(id) || id.startsWith('support:')) &&
+      (validReportID(id) ||
+          id.startsWith('support:') ||
+          id.startsWith('business:') && validReportID(id.substring(9))) &&
       onOpen(id);
   bool validReportID(dynamic id) =>
       id is String && RegExp(r'^[a-f0-9]{24}$').hasMatch(id);

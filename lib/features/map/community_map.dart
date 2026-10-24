@@ -6,9 +6,15 @@ import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../help/support_place.dart';
 import 'user_location_marker.dart';
+import '../business/business_point.dart';
 
 class CommunityMap extends StatefulWidget {
   final LatLng center;
+  final List<BusinessPoint> businesses;
+  final ValueChanged<BusinessPoint>? onBusiness;
+  final LatLng? target;
+  final String? selectedId;
+  final ValueChanged<SupportPlace>? onSupport;
   final LatLng? userPosition;
   final List<Incident> incidents;
   final List<SupportPlace> supportPlaces;
@@ -23,6 +29,11 @@ class CommunityMap extends StatefulWidget {
   const CommunityMap({
     super.key,
     required this.center,
+    this.businesses = const [],
+    this.onBusiness,
+    this.target,
+    this.selectedId,
+    this.onSupport,
     this.userPosition,
     this.incidents = const [],
     this.supportPlaces = const [],
@@ -45,6 +56,21 @@ class _CommunityMapState extends State<CommunityMap> {
   final MapController _controller = MapController();
   bool _ready = false;
 
+  void focusTarget() {
+    if (widget.target == null) return;
+    if (widget.userPosition == null) {
+      _controller.move(widget.target!, 16.5);
+      return;
+    }
+    _controller.fitCamera(
+      CameraFit.coordinates(
+        coordinates: [widget.userPosition!, widget.target!],
+        padding: EdgeInsets.fromLTRB(48, widget.topObstruction + 48, 48, 300),
+        maxZoom: 17,
+      ),
+    );
+  }
+
   void focusOnUser() {
     _controller.move(
       widget.userPosition ?? widget.center,
@@ -56,10 +82,18 @@ class _CommunityMapState extends State<CommunityMap> {
   @override
   void didUpdateWidget(covariant CommunityMap oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (_ready &&
+        widget.target != null &&
+        (oldWidget.target != widget.target ||
+            oldWidget.userPosition == null && widget.userPosition != null)) {
+      focusTarget();
+      return;
+    }
     if (_ready && oldWidget.focusRequest != widget.focusRequest) {
       focusOnUser();
       return;
     }
+    if (widget.target != null) return;
     if (_ready &&
         (oldWidget.center.latitude != widget.center.latitude ||
             oldWidget.center.longitude != widget.center.longitude)) {
@@ -90,7 +124,11 @@ class _CommunityMapState extends State<CommunityMap> {
         initialZoom: widget.initialZoom,
         onMapReady: () {
           _ready = true;
-          if (widget.focusRequest > 0) focusOnUser();
+          if (widget.target != null) {
+            focusTarget();
+          } else if (widget.focusRequest > 0) {
+            focusOnUser();
+          }
         },
         onTap: widget.onPoint == null
             ? null
@@ -121,6 +159,27 @@ class _CommunityMapState extends State<CommunityMap> {
               );
             }).toList(),
           ),
+        if (widget.target != null && widget.userPosition != null)
+          PolylineLayer(
+            polylines: [
+              Polyline(
+                points: [widget.userPosition!, widget.target!],
+                color: green,
+                strokeWidth: 4,
+              ),
+            ],
+          ),
+        if (widget.target != null)
+          MarkerLayer(
+            markers: [
+              Marker(
+                point: widget.target!,
+                width: 70,
+                height: 70,
+                child: const Icon(Icons.location_on, size: 64, color: green),
+              ),
+            ],
+          ),
         MarkerLayer(
           markers: [
             if (widget.onPoint != null)
@@ -145,6 +204,31 @@ class _CommunityMapState extends State<CommunityMap> {
                   ),
                 ),
               ),
+            ...widget.businesses.map(
+              (p) => Marker(
+                point: LatLng(p.latitude, p.longitude),
+                width: 72,
+                height: 72,
+                child: GestureDetector(
+                  onTap: () => widget.onBusiness?.call(p),
+                  child: Tooltip(
+                    message: "${p.name} · Promocionado",
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: navy,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: green, width: 3),
+                      ),
+                      child: const Icon(
+                        Icons.storefront_rounded,
+                        color: green,
+                        size: 34,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             ...widget.supportPlaces.map(
               (p) => Marker(
                 point: LatLng(p.latitude, p.longitude),
@@ -152,15 +236,17 @@ class _CommunityMapState extends State<CommunityMap> {
                 height: 22,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () => showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (_) => SafeArea(
-                      child: SingleChildScrollView(
-                        child: SupportPlaceDetails(place: p),
-                      ),
-                    ),
-                  ),
+                  onTap: widget.onSupport != null
+                      ? () => widget.onSupport!(p)
+                      : () => showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (_) => SafeArea(
+                            child: SingleChildScrollView(
+                              child: SupportPlaceDetails(place: p),
+                            ),
+                          ),
+                        ),
                   child: Tooltip(
                     message: p.name,
                     child: Center(

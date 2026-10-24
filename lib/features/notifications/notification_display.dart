@@ -68,6 +68,26 @@ class NotificationDisplay {
     return true;
   }
 
+  Future<bool> showBusiness(String id, String name) async {
+    await plugin.show(
+      1000000000 + int.parse(id.substring(0, 7), radix: 16),
+      'Un negocio cerca de ti',
+      '$name · Promocionado. Descúbrelo en Harkai.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'harkai_businesses',
+          'Negocios cercanos',
+          channelDescription: 'Avisos promocionados activados en Mi cuenta',
+          icon: 'ic_notifications',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+      ),
+      payload: 'business:$id',
+    );
+    return true;
+  }
+
   Future<bool> cancel() async {
     await plugin.cancelAll();
     return true;
