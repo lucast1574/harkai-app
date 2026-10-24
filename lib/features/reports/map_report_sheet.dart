@@ -166,7 +166,7 @@ class _MapReportSheetState extends State<MapReportSheet> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Elige una categoría para reportar cerca de ti.',
+                                'Comparte lo que ves. Ayuda a tu zona.',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: colors.onSurfaceVariant,
@@ -200,6 +200,11 @@ class _MapReportSheetState extends State<MapReportSheet> {
                           ),
                           const SizedBox(height: 8),
                         ],
+                        const SizedBox(height: 14),
+                        Divider(
+                          height: 1,
+                          color: colors.onSurface.withValues(alpha: .08),
+                        ),
                         const SizedBox(height: 8),
                         Row(
                           children: [
@@ -257,47 +262,138 @@ class _ReportAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final visual = categoryVisual(type);
     final colors = Theme.of(context).colorScheme;
+    final hints = {
+      'crime': 'Robo, extorsión o violencia',
+      'fire': 'Humo o fuego',
+      'emergency': 'Ayuda urgente',
+      'crash': 'En la vía',
+      'pet': 'Perdidas o vistas',
+    };
+    final radius = BorderRadius.circular(20);
     return Material(
-      color: expanded ? visual.color : colors.onSurface.withValues(alpha: .045),
-      borderRadius: BorderRadius.circular(16),
+      color: expanded
+          ? Color.alphaBlend(
+              visual.color.withValues(alpha: .16),
+              colors.surface,
+            )
+          : colors.onSurface.withValues(alpha: .035),
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(
+          color: expanded
+              ? visual.color.withValues(alpha: .45)
+              : colors.onSurface.withValues(alpha: .055),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: radius,
+        focusColor: colors.onSurface.withValues(alpha: .10),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(
-                visual.icon,
-                size: 24,
-                color: expanded ? Colors.white : visual.color,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          padding: EdgeInsets.all(expanded ? 16 : 14),
+          child: expanded
+              ? Row(
                   children: [
-                    Text(
-                      visual.shortLabel,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: expanded ? Colors.white : colors.onSurface,
+                    _CategoryIcon(type: type, large: true),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            visual.shortLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: colors.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            hints[type]!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    if (expanded) ...[
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Robos, extorsiones, secuestros y violencia',
-                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 20,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    _CategoryIcon(type: type),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            visual.shortLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: colors.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            hints[type]!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ],
                 ),
-              ),
-              if (expanded)
-                const Icon(Icons.chevron_right_rounded, color: Colors.white70),
-            ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryIcon extends StatelessWidget {
+  final String type;
+  final bool large;
+  const _CategoryIcon({required this.type, this.large = false});
+  @override
+  Widget build(BuildContext context) {
+    final visual = categoryVisual(type);
+    return Container(
+      width: large ? 42 : 32,
+      height: large ? 42 : 32,
+      decoration: BoxDecoration(
+        color: visual.color.withValues(alpha: .16),
+        borderRadius: BorderRadius.circular(large ? 14 : 10),
+      ),
+      child: Center(
+        child: Icon(
+          visual.icon,
+          size: large ? 25 : 20,
+          color: Color.lerp(
+            visual.color,
+            Theme.of(context).colorScheme.onSurface,
+            Theme.of(context).brightness == Brightness.dark ? 0.22 : 0,
           ),
         ),
       ),
