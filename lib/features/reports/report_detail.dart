@@ -12,11 +12,19 @@ import 'report_repository.dart';
 class ReportDetail extends StatefulWidget {
   final String id;
   final bool own;
+  final bool embedded;
+  final ScrollController? scrollController;
+  final Widget? sheetHeader;
+  final Incident? initialIncident;
   final ValueChanged<Incident>? onMap;
   const ReportDetail({
     super.key,
     required this.id,
     this.own = false,
+    this.embedded = false,
+    this.scrollController,
+    this.sheetHeader,
+    this.initialIncident,
     this.onMap,
   });
   @override
@@ -27,6 +35,12 @@ class _ReportDetailState extends State<ReportDetail> {
   Incident? incident;
   String? error;
   bool busy = false, initialized = false;
+  @override
+  void initState() {
+    super.initState();
+    incident = widget.initialIncident;
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -112,6 +126,231 @@ class _ReportDetailState extends State<ReportDetail> {
     final app = AppScope.of(context);
     final i = incident;
     final visual = i != null ? categoryVisual(i.type) : null;
+    final body = SafeArea(
+      child: ListView(
+        controller: widget.scrollController,
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        children: [
+          if (widget.sheetHeader != null) widget.sheetHeader!,
+          if (i != null && visual != null) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: visual.color,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Center(
+                            child: CategoryGlyph(
+                              type: i.type,
+                              size: 24,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                app.categoryLabel(i.type),
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                i.district ?? i.city ?? 'Reporte comunitario',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(color: const Color(0xff64748b)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        VerificationBadge(i.verified),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xffe2e8f0),
+                            borderRadius: BorderRadius.circular(9),
+                          ),
+                          child: Text(
+                            'Estado: ${i.status == 'resolved'
+                                ? 'Resuelto'
+                                : i.canConfirm || i.verified
+                                ? 'Activo'
+                                : 'Inactivo'}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: navy,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 28),
+                    SelectableText(
+                      i.description,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyLarge?.copyWith(height: 1.45),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Publicado: ${i.createdAt.toLocal().toString().substring(0, 16)}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    if (i.contact != null && i.contact!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: () => launchUrl(
+                          Uri(scheme: 'tel', path: i.contact!.trim()),
+                        ),
+                        icon: const Icon(Icons.phone_outlined, size: 17),
+                        label: Text('Contacto: ${i.contact}'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            if (i.mediaId != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.network(
+                    app.api.photoUrl(i.mediaId!),
+                    headers: app.api.authHeaders,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, error, stack) =>
+                        const MessageCard('La evidencia no está disponible.'),
+                  ),
+                ),
+              ),
+            if (widget.onMap != null)
+              OutlinedButton.icon(
+                onPressed: () => widget.onMap!(i),
+                icon: const Icon(Icons.near_me_outlined),
+                label: const Text('Ver en el mapa'),
+              ),
+            const SizedBox(height: 16),
+            if (app.categories
+                    .where((c) => c.id == i.type)
+                    .firstOrNull
+                    ?.advice
+                    .isNotEmpty ??
+                false)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.health_and_safety_outlined,
+                            color: visual.color,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Recomendaciones ante esta alerta',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: visual.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      ...?app.categories
+                          .where((c) => c.id == i.type)
+                          .firstOrNull
+                          ?.advice
+                          .map(
+                            (a) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text('• $a'),
+                            ),
+                          ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: share,
+                    icon: const Icon(Icons.share_outlined, size: 18),
+                    label: const Text('Compartir'),
+                  ),
+                ),
+                if (i.canConfirm && !(widget.own || i.viewerIsAuthor)) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton.icon(
+                      onPressed: busy ? null : confirm,
+                      icon: const Icon(Icons.verified_outlined, size: 18),
+                      label: Text(
+                        app.account == null
+                            ? 'Ingresar para confirmar'
+                            : 'Confirmo el hecho',
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            if ((widget.own || i.viewerIsAuthor) && i.status == 'active') ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: busy ? null : resolve,
+                  icon: const Icon(Icons.check_circle_outline, size: 18),
+                  label: const Text('Marcar mi reporte como resuelto'),
+                ),
+              ),
+            ],
+            ReportComments(
+              key: ValueKey('${i.id}:${app.account?.id ?? 'guest'}'),
+              incidentId: i.id,
+            ),
+          ],
+          if (error != null) MessageCard(error!, error: true, onRetry: load),
+          if (busy)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+        ],
+      ),
+    );
+    if (widget.embedded) return body;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: navy,
@@ -134,231 +373,7 @@ class _ReportDetailState extends State<ReportDetail> {
             ),
         ],
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-          children: [
-            if (i != null && visual != null) ...[
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: visual.color,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Center(
-                              child: CategoryGlyph(
-                                type: i.type,
-                                size: 24,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  app.categoryLabel(i.type),
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.w800),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  i.district ?? i.city ?? 'Reporte comunitario',
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: const Color(0xff64748b),
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          VerificationBadge(i.verified),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xffe2e8f0),
-                              borderRadius: BorderRadius.circular(9),
-                            ),
-                            child: Text(
-                              'Estado: ${i.status == 'resolved'
-                                  ? 'Resuelto'
-                                  : i.canConfirm || i.verified
-                                  ? 'Activo'
-                                  : 'Inactivo'}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: navy,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Divider(height: 28),
-                      SelectableText(
-                        i.description,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyLarge?.copyWith(height: 1.45),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        'Publicado: ${i.createdAt.toLocal().toString().substring(0, 16)}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      if (i.contact != null &&
-                          i.contact!.trim().isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        OutlinedButton.icon(
-                          onPressed: () => launchUrl(
-                            Uri(scheme: 'tel', path: i.contact!.trim()),
-                          ),
-                          icon: const Icon(Icons.phone_outlined, size: 17),
-                          label: Text('Contacto: ${i.contact}'),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              if (i.mediaId != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.network(
-                      app.api.photoUrl(i.mediaId!),
-                      headers: app.api.authHeaders,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, error, stack) =>
-                          const MessageCard('La evidencia no está disponible.'),
-                    ),
-                  ),
-                ),
-              if (widget.onMap != null)
-                OutlinedButton.icon(
-                  onPressed: () => widget.onMap!(i),
-                  icon: const Icon(Icons.near_me_outlined),
-                  label: const Text('Ver en el mapa'),
-                ),
-              const SizedBox(height: 16),
-              if (app.categories
-                      .where((c) => c.id == i.type)
-                      .firstOrNull
-                      ?.advice
-                      .isNotEmpty ??
-                  false)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.health_and_safety_outlined,
-                              color: visual.color,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Recomendaciones ante esta alerta',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: visual.color,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        ...?app.categories
-                            .where((c) => c.id == i.type)
-                            .firstOrNull
-                            ?.advice
-                            .map(
-                              (a) => Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Text('• $a'),
-                              ),
-                            ),
-                      ],
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: share,
-                      icon: const Icon(Icons.share_outlined, size: 18),
-                      label: const Text('Compartir'),
-                    ),
-                  ),
-                  if (i.canConfirm && !(widget.own || i.viewerIsAuthor)) ...[
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 2,
-                      child: FilledButton.icon(
-                        onPressed: busy ? null : confirm,
-                        icon: const Icon(Icons.verified_outlined, size: 18),
-                        label: Text(
-                          app.account == null
-                              ? 'Ingresar para confirmar'
-                              : 'Confirmo el hecho',
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              if ((widget.own || i.viewerIsAuthor) && i.status == 'active') ...[
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: busy ? null : resolve,
-                    icon: const Icon(Icons.check_circle_outline, size: 18),
-                    label: const Text('Marcar mi reporte como resuelto'),
-                  ),
-                ),
-              ],
-              ReportComments(
-                key: ValueKey('${i.id}:${app.account?.id ?? 'guest'}'),
-                incidentId: i.id,
-              ),
-            ],
-            if (error != null) MessageCard(error!, error: true, onRetry: load),
-            if (busy)
-              const Padding(
-                padding: EdgeInsets.all(24),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-          ],
-        ),
-      ),
+      body: body,
     );
   }
 }

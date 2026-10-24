@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../map/map_target.dart';
+import '../map/map_target_sheet.dart';
 import '../business/business_point.dart';
 import '../../shared/app_choice_field.dart';
 import 'report_categories.dart';
@@ -534,110 +535,13 @@ class _ReportBrowserState extends State<ReportBrowser> {
           ),
         ),
         if (selectedTarget != null)
-          Positioned(
-            left: 14,
-            right: 14,
-            bottom: 14,
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            selectedTarget!.support != null ||
-                                    selectedTarget!.businessPoint != null
-                                ? selectedTarget!.title
-                                : "${crimeTypes.contains(selectedTarget!.incident!.type) ? 'Crimen · ' : ''}${AppScope.of(context).categoryLabel(selectedTarget!.incident!.type)}",
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: "Cerrar ficha",
-                          onPressed: () {
-                            setState(() => selectedTarget = null);
-                            widget.onCloseMapTarget?.call();
-                          },
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-                    if (selectedTarget!.incident?.mediaId != null ||
-                        selectedTarget!.businessPoint?.data["media_id"]
-                                is String &&
-                            (selectedTarget!.businessPoint!.data["media_id"]
-                                    as String)
-                                .isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            app.api.photoUrl(
-                              selectedTarget!.incident?.mediaId ??
-                                  selectedTarget!
-                                          .businessPoint!
-                                          .data["media_id"]
-                                      as String,
-                            ),
-                            height: 100,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, e, s) => const SizedBox.shrink(),
-                          ),
-                        ),
-                      ),
-                    if (selectedTarget!.businessPoint != null)
-                      Text(
-                        "Promocionado · ${businessKinds[selectedTarget!.businessPoint!.data["kind"]] ?? "Negocio"}",
-                      ),
-                    Text(
-                      selectedTarget!.title,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Text(
-                      "Línea de referencia desde tu ubicación",
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        final target = selectedTarget!;
-                        if (target.incident != null) {
-                          open(target.incident!);
-                        } else {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            builder: (_) => SafeArea(
-                              child: SingleChildScrollView(
-                                child: target.businessPoint != null
-                                    ? BusinessDetails(
-                                        point: target.businessPoint!,
-                                      )
-                                    : SupportPlaceDetails(
-                                        place: target.support!,
-                                      ),
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.open_in_full),
-                      label: Text(
-                        selectedTarget!.incident != null
-                            ? "Ver publicación y comentarios"
-                            : "Ver información",
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          MapTargetSheet(
+            key: ValueKey(selectedTarget!.id),
+            target: selectedTarget!,
+            onClose: () {
+              setState(() => selectedTarget = null);
+              widget.onCloseMapTarget?.call();
+            },
           ),
         if (selectedTarget == null)
           Align(
