@@ -55,8 +55,8 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
     final settings = defaultTargetPlatform == TargetPlatform.android
         ? AndroidSettings(
             accuracy: LocationAccuracy.high,
-            distanceFilter: 25,
-            intervalDuration: const Duration(seconds: 10),
+            distanceFilter: 10,
+            intervalDuration: const Duration(seconds: 5),
             foregroundNotificationConfig: const ForegroundNotificationConfig(
               notificationTitle: 'Alertas durante tu recorrido',
               notificationText:
@@ -69,7 +69,7 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
           )
         : const LocationSettings(
             accuracy: LocationAccuracy.high,
-            distanceFilter: 25,
+            distanceFilter: 10,
           );
     _positions = watch(settings).listen(
       (position) {
@@ -85,7 +85,7 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
       },
     );
     _timer = Timer.periodic(
-      const Duration(seconds: 30),
+      const Duration(seconds: 10),
       (_) => unawaited(sync()),
     );
     notifyListeners();
@@ -103,7 +103,7 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
       return false;
     }
     if (_lastAttempt != null &&
-        now().difference(_lastAttempt!) < const Duration(seconds: 30)) {
+        now().difference(_lastAttempt!) < const Duration(seconds: 10)) {
       return false;
     }
     if (_sent != null &&
@@ -116,7 +116,7 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
               position.latitude,
               position.longitude,
             ) <
-            25) {
+            10) {
       return false;
     }
     _sending = true;
@@ -141,7 +141,9 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
       if (version == _generation && id == device()) {
         try {
           await onBusinessNotices?.call(
-            response["business_notices"] as List? ?? [],
+            (response["proximity_notices"] ?? response["business_notices"])
+                    as List? ??
+                [],
           );
         } catch (_) {
           /* Pending notices are retried on the next location update. */
@@ -210,4 +212,4 @@ bool usableAlertPosition(Position position, DateTime now) =>
     position.accuracy >= 0 &&
     position.accuracy <= 100 &&
     now.difference(position.timestamp) <= const Duration(minutes: 2) &&
-    position.timestamp.difference(now) <= const Duration(seconds: 30);
+    position.timestamp.difference(now) <= const Duration(seconds: 10);

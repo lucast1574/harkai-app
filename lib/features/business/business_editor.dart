@@ -7,6 +7,7 @@ import '../location/location_service.dart';
 import '../map/community_map.dart';
 import '../reports/report_photo.dart';
 import 'business_point.dart';
+import 'business_promotion.dart';
 
 class BusinessEditor extends StatefulWidget {
   final BusinessPoint? point;
@@ -22,7 +23,7 @@ class _BusinessEditorState extends State<BusinessEditor> {
   String? media, error;
   LatLng? position;
   bool busy = false;
-  int radius = 250;
+
   static const labels = {
     'name': 'Nombre del negocio',
     'subtype': 'Especialidad (opcional)',
@@ -44,7 +45,6 @@ class _BusinessEditorState extends State<BusinessEditor> {
       kind = p['kind'] as String;
       media = p['media_id'] as String?;
       position = LatLng(widget.point!.latitude, widget.point!.longitude);
-      radius = p['radius_meters'] as int;
     }
   }
 
@@ -103,7 +103,7 @@ class _BusinessEditorState extends State<BusinessEditor> {
       error = null;
     });
     try {
-      await AppScope.of(context).api.request(
+      final saved = await AppScope.of(context).api.request(
         widget.point == null ? 'POST' : 'PUT',
         'me/businesses${widget.point == null ? '' : '/${widget.point!.id}'}',
         body: {
@@ -111,11 +111,26 @@ class _BusinessEditorState extends State<BusinessEditor> {
           'kind': kind,
           'latitude': position!.latitude,
           'longitude': position!.longitude,
-          'radius_meters': radius,
+          'radius_meters': 500,
+          if (widget.point?.data['offer'] is String)
+            'offer': widget.point!.data['offer'],
+          if (widget.point?.data['discount_code'] is String)
+            'discount_code': widget.point!.data['discount_code'],
           if (media != null) 'media_id': media,
         },
       );
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        if (widget.point == null) {
+          await Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => BusinessPromotion(point: BusinessPoint(saved)),
+            ),
+          );
+        } else {
+          Navigator.pop(context);
+        }
+      }
     } catch (e) {
       if (mounted) setState(() => error = e.toString());
     } finally {
@@ -127,7 +142,7 @@ class _BusinessEditorState extends State<BusinessEditor> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(
-        widget.point == null ? 'Registrar negocio' : 'Editar negocio',
+        widget.point == null ? 'Pon tu negocio en el mapa' : 'Editar punto',
       ),
     ),
     body: Form(
@@ -136,45 +151,34 @@ class _BusinessEditorState extends State<BusinessEditor> {
         padding: const EdgeInsets.all(20),
         children: [
           const Text(
-            'Un lugar fijo en tu comunidad',
+            'Tu negocio, en su lugar',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Los cambios pasan por revisión. Tu punto aparecerá cuando esté aprobado y tenga un pago vigente.',
+            'Completa lo esencial y ubica tu negocio. Cada punto tiene un pago único. Antes de pagar podrás añadir una oferta o un código para los vecinos.',
           ),
           const SizedBox(height: 20),
-          for (final e in labels.entries)
+          for (final key in ['name', 'description'])
             Padding(
               padding: const EdgeInsets.only(bottom: 14),
               child: TextFormField(
-                controller: fields[e.key],
+                controller: fields[key],
                 enabled: !busy,
-                maxLength: e.key == 'description'
-                    ? 2000
-                    : e.key == 'name'
-                    ? 100
-                    : e.key == 'subtype'
-                    ? 80
-                    : e.key == 'phone'
-                    ? 30
-                    : e.key == 'address' || e.key == 'website'
-                    ? 300
-                    : 100,
-                maxLines: e.key == 'description' ? 4 : 1,
-                decoration: InputDecoration(labelText: e.value),
-                validator: (v) {
-                  if (['name', 'description'].contains(e.key) &&
-                      (v?.trim().length ?? 0) < (e.key == 'name' ? 2 : 5)) {
-                    return 'Completa este campo.';
-                  }
-                  if (e.key == 'website' &&
-                      v!.isNotEmpty &&
-                      !(Uri.tryParse(v)?.isScheme('https') ?? false)) {
-                    return 'Usa una dirección https://';
-                  }
-                  return null;
-                },
+                maxLines: key == 'description' ? 3 : 1,
+                maxLength: key == 'description' ? 2000 : 100,
+                buildCounter:
+                    (
+                      _, {
+                      required currentLength,
+                      required isFocused,
+                      maxLength,
+                    }) => null,
+                decoration: InputDecoration(labelText: labels[key]),
+                validator: (v) =>
+                    (v?.trim().length ?? 0) < (key == 'name' ? 2 : 5)
+                    ? 'Completa este campo.'
+                    : null,
               ),
             ),
           AppChoiceField(
@@ -183,19 +187,10 @@ class _BusinessEditorState extends State<BusinessEditor> {
             options: businessKinds,
             onChanged: busy ? null : (v) => setState(() => kind = v),
           ),
-          const SizedBox(height: 12),
-          AppChoiceField(
-            label: 'Avisar al acercarse',
-            value: '$radius',
-            options: const {
-              '100': '100 m',
-              '250': '250 m',
-              '500': '500 m',
-              '1000': '1 km',
-            },
-            onChanged: busy
-                ? null
-                : (v) => setState(() => radius = int.parse(v)),
+          const SizedBox(height: 16),
+          Text(
+            position == null ? 'Ubicación del negocio' : 'Ubicación elegida',
+            style: Theme.of(context).textTheme.titleSmall,
           ),
           OutlinedButton.icon(
             onPressed: busy ? null : locate,
@@ -225,11 +220,53 @@ class _BusinessEditorState extends State<BusinessEditor> {
               onPressed: busy ? null : () => setState(() => media = null),
               child: const Text('Quitar foto'),
             ),
+          ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: const Text('Más detalles (opcional)'),
+            children: [
+              for (final key in ['address', 'subtype', 'phone', 'website'])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: TextFormField(
+                    controller: fields[key],
+                    enabled: !busy,
+                    decoration: InputDecoration(labelText: labels[key]),
+                    maxLength: key == 'phone'
+                        ? 30
+                        : key == 'subtype'
+                        ? 80
+                        : 300,
+                    buildCounter:
+                        (
+                          _, {
+                          required currentLength,
+                          required isFocused,
+                          maxLength,
+                        }) => null,
+                    validator: (v) =>
+                        key == 'website' &&
+                            v != null &&
+                            v.trim().isNotEmpty &&
+                            !(Uri.tryParse(v.trim())?.isScheme('https') ??
+                                false)
+                        ? 'Usa una dirección https://'
+                        : null,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
           if (error != null) MessageCard(error!, error: true),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: busy ? null : save,
-            child: Text(busy ? 'Guardando…' : 'Guardar y enviar a revisión'),
+            child: Text(
+              busy
+                  ? 'Guardando…'
+                  : widget.point == null
+                  ? 'Continuar'
+                  : 'Guardar cambios',
+            ),
           ),
         ],
       ),

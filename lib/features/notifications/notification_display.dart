@@ -77,7 +77,7 @@ class NotificationDisplay {
         android: AndroidNotificationDetails(
           'harkai_businesses',
           'Negocios cercanos',
-          channelDescription: 'Avisos promocionados activados en Mi cuenta',
+          channelDescription: 'Avisos de puntos promocionados cercanos',
           icon: 'ic_notifications',
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
@@ -86,6 +86,31 @@ class NotificationDisplay {
       payload: 'business:$id',
     );
     return true;
+  }
+
+  Future<bool> showProximity(String id, Map<String, dynamic> notice) async {
+    final business = notice['kind'] != 'incident';
+    final stage = (notice['stage'] as num?)?.toInt() ?? 500;
+    await plugin.show(
+      (business ? 1000000000 : 0) + int.parse(id.substring(0, 7), radix: 16),
+      notice['title'] as String? ??
+          (business ? 'Un negocio cerca de ti' : 'Un reporte cerca de ti'),
+      notice['body'] as String? ??
+          notice['name'] as String? ??
+          'Revisa el punto en Harkai.',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          business ? 'harkai_businesses' : 'harkai_reports',
+          business ? 'Negocios cercanos' : 'Reportes de tu zona',
+          icon: 'ic_notifications',
+          importance: business ? Importance.defaultImportance : Importance.high,
+          priority: business ? Priority.defaultPriority : Priority.high,
+          onlyAlertOnce: false,
+        ),
+      ),
+      payload: business ? 'business:$id' : id,
+    );
+    return stage > 0;
   }
 
   Future<bool> cancel() async {

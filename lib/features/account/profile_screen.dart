@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import '../business/business_directory.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_scope.dart';
-import '../../core/models.dart';
 import '../../shared/widgets.dart';
-import '../../shared/app_choice_field.dart';
 import '../../shared/account_avatar.dart';
-import '../notifications/notification_settings.dart';
+import 'appearance_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,9 +13,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final form = GlobalKey<FormState>();
-  final name = TextEditingController(), radius = TextEditingController();
-  String notifications = 'all', language = 'es', theme = 'system';
-  bool initialized = false, busy = false, businessNotifications = false;
+  final name = TextEditingController();
+  bool initialized = false, busy = false;
   String? error, message;
   @override
   void didChangeDependencies() {
@@ -27,11 +23,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final user = AppScope.of(context).account;
       if (user != null) {
         name.text = user.name;
-        radius.text = '${user.preferences.radius}';
-        notifications = user.preferences.notifications;
-        language = user.preferences.language;
-        theme = user.preferences.theme;
-        businessNotifications = user.preferences.businessNotifications;
         initialized = true;
       }
     }
@@ -40,12 +31,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     name.dispose();
-    radius.dispose();
     super.dispose();
   }
 
-  Future<bool> save() async {
-    if (!form.currentState!.validate()) return false;
+  Future<void> saveName() async {
+    if (!form.currentState!.validate()) return;
     setState(() {
       busy = true;
       error = null;
@@ -54,129 +44,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final app = AppScope.of(context);
     try {
       await app.api.request('PATCH', 'me', body: {'name': name.text.trim()});
-      await app.api.request(
-        'PUT',
-        'me/preferences',
-        body: Preferences(
-          notifications: notifications,
-          businessNotifications: businessNotifications,
-          radius: int.parse(radius.text),
-          language: language,
-          theme: theme,
-        ).toJson(),
-      );
       await app.reloadAccount();
-      if (mounted) {
-        setState(
-          () => message = 'Tu perfil y preferencias quedaron guardados.',
-        );
-      }
-      return true;
+      if (mounted) setState(() => message = 'Nombre guardado.');
     } catch (e) {
       if (mounted) setState(() => error = e.toString());
-      return false;
     } finally {
       if (mounted) setState(() => busy = false);
     }
   }
 
-  Future<void> selectRadius(String value) async {
-    if (value != 'custom') {
-      setState(() => radius.text = value);
-      return;
-    }
-    final radiusForm = GlobalKey<FormState>();
-    var meters = radius.text;
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            0,
-            20,
-            MediaQuery.viewInsetsOf(context).bottom + 20,
-          ),
-          child: Form(
-            key: radiusForm,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  initialValue: meters,
-                  autofocus: true,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Distancia en metros',
-                    helperText: 'Entre 100 y 10 000 m',
-                  ),
-                  onChanged: (value) => meters = value,
-                  validator: (value) {
-                    final distance = int.tryParse(value ?? '');
-                    return distance == null ||
-                            distance < 100 ||
-                            distance > 10000
-                        ? 'Elige de 100 a 10 000 metros.'
-                        : null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () {
-                      if (radiusForm.currentState!.validate()) {
-                        Navigator.pop(context, meters);
-                      }
-                    },
-                    child: const Text('Usar esta distancia'),
-                  ),
-                ),
-              ],
+  Future<void> appearance(String value) async {
+    try {
+      await AppScope.of(context).changeAppearance(value);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'El tema se aplicó en este teléfono. Se sincronizará cuando vuelvas a elegirlo con conexión.',
             ),
           ),
-        ),
-      ),
-    );
-    if (mounted && selected != null) setState(() => radius.text = selected);
+        );
+      }
+    }
+  }
+
+  Future<void> logout() async {
+    setState(() => busy = true);
+    try {
+      await AppScope.of(context).logout();
+    } catch (e) {
+      if (mounted) setState(() => error = e.toString());
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = AppScope.of(context).account;
+    final app = AppScope.of(context);
+    final user = app.account;
     if (user == null) return const SizedBox.shrink();
     final colors = Theme.of(context).colorScheme;
-    final roleLabel = switch (user.role) {
-      'admin' => 'Administrador',
-      'gov' => 'Gestión municipal',
-      _ => 'Miembro de la comunidad',
-    };
-    final radiusOptions = <String, String>{
-      '500': '500 m',
-      '1000': '1 km',
-      '2500': '2,5 km',
-      '5000': '5 km',
-      '10000': '10 km',
-      if (!['500', '1000', '2500', '5000', '10000'].contains(radius.text))
-        radius.text: '${radius.text} m',
-      'custom': 'Otra distancia…',
-    };
     return Form(
       key: form,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
         children: [
-          Center(child: AccountAvatar(account: user, radius: 38)),
+          Center(child: AccountAvatar(account: user, radius: 36)),
           const SizedBox(height: 14),
           Text(
             user.name,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -.5,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
           Text(
@@ -184,29 +106,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             textAlign: TextAlign.center,
             style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
           ),
-          const SizedBox(height: 10),
-          Center(
-            child: Text(
-              roleLabel,
-              style: TextStyle(
-                color: colors.primary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 26),
+          const SizedBox(height: 24),
           Card(
             child: ExpansionTile(
               shape: const Border(),
               collapsedShape: const Border(),
               leading: const Icon(Icons.person_outline_rounded),
-              title: const Text(
-                'Datos personales',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
+              title: const Text('Datos personales'),
               subtitle: Text(user.name),
-              childrenPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              childrenPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               children: [
                 AppField(
                   label: 'Tu nombre',
@@ -216,112 +124,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ? 'Escribe al menos dos caracteres.'
                       : null,
                 ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton(
+                    onPressed: busy ? null : saveName,
+                    child: const Text('Guardar nombre'),
+                  ),
+                ),
+                if (message != null) Text(message!),
               ],
             ),
           ),
           const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.tune_rounded, size: 21),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Tu zona, a tu medida',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  AppChoiceField(
-                    label: 'Alertas que te interesan',
-                    value: notifications,
-                    options: const {
-                      'all': 'Todas las alertas',
-                      'critical': 'Emergencias y seguridad',
-                      'none': 'Ninguna',
-                    },
-                    onChanged: (value) => setState(() => notifications = value),
-                  ),
-                  const SizedBox(height: 14),
-                  AppChoiceField(
-                    label: 'Cerca de ti',
-                    value: radius.text,
-                    options: radiusOptions,
-                    onChanged: selectRadius,
-                  ),
-                  const SizedBox(height: 14),
-                  AppChoiceField(
-                    label: 'Apariencia',
-                    value: theme,
-                    options: const {
-                      'system': 'Como mi teléfono',
-                      'light': 'Clara',
-                      'dark': 'Oscura',
-                    },
-                    onChanged: (value) => setState(() => theme = value),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text("Negocios cercanos"),
-                    subtitle: const Text(
-                      "Recibir avisos promocionados al acercarme. Requiere alertas durante mi recorrido.",
-                    ),
-                    value: businessNotifications,
-                    onChanged: busy
-                        ? null
-                        : (v) => setState(() => businessNotifications = v),
-                  ),
-                  if (error != null) MessageCard(error!, error: true),
-                  if (message != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Text(
-                        'Cambios guardados',
-                        style: TextStyle(color: colors.primary),
-                      ),
-                    ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: busy ? null : save,
-                      child: Text(busy ? 'Guardando…' : 'Guardar cambios'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          AppearancePicker(
+            value: app.appearance ?? user.preferences.theme,
+            onChanged: appearance,
           ),
-          const SizedBox(height: 12),
-          NotificationSettings(key: ValueKey(user.id)),
-          ListTile(
-            leading: const Icon(Icons.storefront_outlined),
-            title: const Text("Mi negocio"),
-            subtitle: const Text(
-              "Registrar y administrar puntos promocionados",
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => Scaffold(
-                  appBar: AppBar(title: const Text("Mi negocio")),
-                  body: const BusinessDirectory(own: true),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
             leading: const Icon(Icons.credit_card_off_rounded),
@@ -330,28 +150,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
             trailing: const Icon(Icons.call_outlined, size: 20),
             onTap: () => launchUrl(Uri(scheme: 'tel', path: '1820')),
           ),
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-            leading: const Icon(Icons.logout_rounded),
-            title: const Text('Cerrar sesión'),
-            onTap: busy
-                ? null
-                : () async {
-                    setState(() {
-                      busy = true;
-                      error = null;
-                    });
-                    try {
-                      await AppScope.of(context).logout();
-                    } catch (e) {
-                      if (mounted) setState(() => error = e.toString());
-                    } finally {
-                      if (mounted) setState(() => busy = false);
-                    }
-                  },
+          if (error != null) MessageCard(error!, error: true),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.tonalIcon(
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 17),
+                backgroundColor: colors.error.withValues(alpha: .09),
+                foregroundColor: colors.error,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              onPressed: busy ? null : logout,
+              icon: const Icon(Icons.logout_rounded, size: 20),
+              label: Text(
+                busy ? 'Cerrando sesión…' : 'Cerrar sesión',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          const SizedBox(height: 16),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
             children: [
               TextButton(
                 onPressed: () => launchUrl(
@@ -362,7 +185,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               TextButton(
                 onPressed: () => launchUrl(
-                  Uri.parse('https://harkai.lat/eliminar-cuenta/'),
+                  Uri.parse('https://harkai.lat/terminos/'),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: const Text('Términos'),
+              ),
+              TextButton(
+                onPressed: () => launchUrl(
+                  Uri.parse('https://panel.harkai.lat/eliminar-cuenta'),
                   mode: LaunchMode.externalApplication,
                 ),
                 child: const Text('Eliminar cuenta'),

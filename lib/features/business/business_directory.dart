@@ -6,6 +6,7 @@ import '../auth/login_screen.dart';
 import '../map/map_target.dart';
 import 'business_point.dart';
 import 'business_editor.dart';
+import 'business_promotion.dart';
 
 class BusinessDirectory extends StatefulWidget {
   final bool own;
@@ -116,7 +117,7 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
         const SizedBox(height: 8),
         Text(
           widget.own
-              ? 'Prepara tu punto y envíalo a revisión. La publicación requiere un pago vigente. Los pagos con Stripe están pendientes de habilitar.'
+              ? 'Prepara tu punto y envíalo a revisión. Cada punto se paga una sola vez. Los pagos con Stripe están pendientes de habilitar.'
               : 'Descubre negocios de tu zona o pon el tuyo en el mapa.',
         ),
         if (!widget.own)
@@ -165,12 +166,26 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
                       : widget.onMap?.call(MapTarget.business(p)),
                 ),
                 if (widget.own)
+                  TextButton.icon(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BusinessPromotion(point: p),
+                        ),
+                      );
+                      if (mounted) await load();
+                    },
+                    icon: const Icon(Icons.local_offer_outlined),
+                    label: const Text('Oferta y código de descuento'),
+                  ),
+                if (widget.own)
                   SwitchListTile(
                     title: Text(
                       p.enabled ? 'Punto habilitado' : 'Punto pausado',
                     ),
                     subtitle: const Text(
-                      'Solo se muestra con revisión aprobada y pago vigente.',
+                      'Solo se muestra con revisión aprobada y un pago confirmado.',
                     ),
                     value: p.enabled,
                     onChanged: busy ? null : (_) => toggle(p),

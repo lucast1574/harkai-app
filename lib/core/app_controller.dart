@@ -10,6 +10,9 @@ import 'models.dart';
 class AppController extends ChangeNotifier {
   final ApiClient api;
   Account? account;
+  String? appearance;
+  Future<void> _appearanceWrites = Future.value();
+  int _appearanceGeneration = 0;
   String? pendingReport, pendingBusiness;
   SupportPlace? pendingSupport;
   late final notifications = NotificationService(api, () => account?.id, (id) {
@@ -39,6 +42,7 @@ class AppController extends ChangeNotifier {
   Future<bool> restoreSession() => _restoringSession ??= _restoreSession();
 
   Future<bool> _restoreSession() async {
+    appearance = await api.storage.read(key: "harkai_appearance_v1");
     await api.restore();
     final saved = api.savedAccount;
     if (saved != null) {
@@ -82,6 +86,32 @@ class AppController extends ChangeNotifier {
         .toList();
     capabilities = meta['capabilities'] as Map<String, dynamic>;
     return categories;
+  }
+
+  Future<void> changeAppearance(String value) async {
+    if (!['system', 'light', 'dark'].contains(value)) return;
+    appearance = value;
+    notifyListeners();
+    final owner = account?.id;
+    final prefs = account?.preferences;
+    final version = ++_appearanceGeneration;
+    _appearanceWrites = _appearanceWrites.catchError((Object _) {}).then((
+      _,
+    ) async {
+      await api.storage.write(key: 'harkai_appearance_v1', value: value);
+      if (owner == null || account?.id != owner || prefs == null) return;
+      final data = await api.request(
+        'PUT',
+        'me/preferences',
+        body: {...prefs.toJson(), 'theme': value},
+      );
+      if (account?.id == owner && version == _appearanceGeneration) {
+        account = Account.fromJson(data).withPhoto(account?.photoUrl);
+        await api.cacheAccount(data);
+        notifyListeners();
+      }
+    });
+    await _appearanceWrites;
   }
 
   Future<Account?> reloadAccount() async {

@@ -4,6 +4,7 @@ import 'core/app_controller.dart';
 import 'core/app_scope.dart';
 import 'core/theme.dart';
 import 'features/navigation/app_shell.dart';
+import 'features/notifications/notification_gate.dart';
 import 'features/splash/launch_experience.dart';
 
 Future<void> main() async {
@@ -29,7 +30,8 @@ class HarkaiApp extends StatelessWidget {
     child: ListenableBuilder(
       listenable: controller,
       builder: (context, child) {
-        final theme = controller.account?.preferences.theme;
+        final theme =
+            controller.appearance ?? controller.account?.preferences.theme;
         return MaterialApp(
           title: 'Harkai',
           debugShowCheckedModeBanner: false,
@@ -40,7 +42,9 @@ class HarkaiApp extends StatelessWidget {
               : theme == 'light'
               ? ThemeMode.light
               : ThemeMode.system,
-          home: const LaunchExperience(child: AppShell()),
+          home: const LaunchExperience(
+            child: NotificationGate(child: AppShell()),
+          ),
         );
       },
     ),

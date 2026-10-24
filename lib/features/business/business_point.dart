@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_scope.dart';
+import 'package:flutter/services.dart';
 
 const businessStates = {
   'pending': 'pendiente',
@@ -9,6 +10,7 @@ const businessStates = {
   'active': 'vigente',
   'past_due': 'vencido',
   'canceled': 'cancelado',
+  'refunded': 'reembolsado',
   'expired': 'vencido',
 };
 const businessKinds = {
@@ -72,6 +74,43 @@ class BusinessDetails extends StatelessWidget {
               p['city'],
             ].whereType<String>().where((s) => s.isNotEmpty).join(', '),
           ),
+          if (p['offer'] is String && (p['offer'] as String).isNotEmpty)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Oferta para vecinos',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(p['offer'] as String),
+                  ],
+                ),
+              ),
+            ),
+          if (p['discount_code'] is String &&
+              (p['discount_code'] as String).isNotEmpty)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.local_offer_outlined),
+              title: SelectableText(p['discount_code'] as String),
+              subtitle: const Text('Consulta las condiciones con el negocio'),
+              trailing: IconButton(
+                tooltip: 'Copiar código',
+                icon: const Icon(Icons.copy_outlined),
+                onPressed: () {
+                  Clipboard.setData(
+                    ClipboardData(text: p['discount_code'] as String),
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Código copiado.')),
+                  );
+                },
+              ),
+            ),
           if (p['phone'] is String && (p['phone'] as String).isNotEmpty)
             TextButton.icon(
               onPressed: () =>

@@ -116,7 +116,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Tu zona, a tu medida'), findsOneWidget);
+      expect(find.text('Apariencia'), findsOneWidget);
       expect(find.byType(TextFormField), findsNothing);
       expect(find.text('Radio personalizado (100 a 10000 m)'), findsNothing);
       await tester.tap(find.text('Datos personales'));

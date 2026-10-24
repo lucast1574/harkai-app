@@ -35,12 +35,13 @@ class NotificationService {
             !validReportID(point)) {
           continue;
         }
-        await display.showBusiness(
-          point!,
-          n["name"] as String? ?? "Negocio cercano",
-        );
+        await display.showProximity(point!, n);
         if (owner != currentUser() || version != generation || !enabled) return;
-        await api.request("POST", "me/business-notices/$id/ack");
+        await api.request(
+          "POST",
+          "me/proximity-notices/$id/ack",
+          body: {"stage": n["stage"] ?? 0},
+        );
       }
     },
     onSynced: (position) async {
@@ -69,7 +70,8 @@ class NotificationService {
       await setup();
       final settings = await FirebaseMessaging.instance
           .getNotificationSettings();
-      if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+      if (settings.authorizationStatus != AuthorizationStatus.authorized &&
+          settings.authorizationStatus != AuthorizationStatus.provisional) {
         return false;
       }
       final token = await FirebaseMessaging.instance.getToken();
@@ -133,7 +135,8 @@ class NotificationService {
     };
     await setup();
     final settings = await FirebaseMessaging.instance.requestPermission();
-    if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+    if (settings.authorizationStatus != AuthorizationStatus.authorized &&
+        settings.authorizationStatus != AuthorizationStatus.provisional) {
       subscription = null;
       await FirebaseMessaging.instance.setAutoInitEnabled(false);
       throw Exception(
