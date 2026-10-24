@@ -115,6 +115,7 @@ class _PermissionPromptState extends State<_PermissionPrompt> {
   Future<void> enable() async {
     if (settingsNeeded) {
       await Geolocator.openAppSettings();
+      if (mounted) Navigator.pop(context);
       return;
     }
     setState(() => busy = true);
