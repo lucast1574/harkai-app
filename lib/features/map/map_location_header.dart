@@ -127,7 +127,7 @@ class MapLocationHeader extends StatelessWidget {
                               : 'Activa el GPS',
                           style: TextStyle(
                             color: dark
-                                ? Colors.white.withValues(alpha: .74)
+                                ? Colors.white.withValues(alpha: .88)
                                 : colors.onSurfaceVariant,
                             fontSize: 12,
                           ),

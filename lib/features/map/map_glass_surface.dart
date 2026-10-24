@@ -33,8 +33,8 @@ class MapGlassSurface extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: dark
                     ? [
-                        tint.withValues(alpha: accent == null ? 0.72 : 0.85),
-                        tint.withValues(alpha: accent == null ? 0.84 : 0.93),
+                        tint.withValues(alpha: accent == null ? 0.64 : 0.85),
+                        tint.withValues(alpha: accent == null ? 0.78 : 0.93),
                       ]
                     : [
                         Colors.white.withValues(alpha: .90),
@@ -45,7 +45,7 @@ class MapGlassSurface extends StatelessWidget {
                 color:
                     accent?.withValues(alpha: dark ? 0.48 : 0.55) ??
                     (dark
-                        ? Colors.white.withValues(alpha: .12)
+                        ? Colors.white.withValues(alpha: .09)
                         : Colors.black.withValues(alpha: .06)),
               ),
             ),
