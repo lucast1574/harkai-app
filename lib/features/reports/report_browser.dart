@@ -480,6 +480,11 @@ class _ReportBrowserState extends State<ReportBrowser> {
             ],
             supportPlaces: supportPlaces,
             businesses: businesses,
+            onBackgroundTap: () {
+              if (selectedTarget == null) return;
+              setState(() => selectedTarget = null);
+              widget.onCloseMapTarget?.call();
+            },
             onBusiness: (p) =>
                 setState(() => selectedTarget = MapTarget.business(p)),
             target: selectedTarget?.point,

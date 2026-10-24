@@ -48,6 +48,12 @@ void main() {
       AppScope(
         controller: app,
         child: MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(padding: const EdgeInsets.only(top: 70)),
+            child: child!,
+          ),
           theme: appTheme(Brightness.dark),
           home: Scaffold(
             body: MapTargetSheet(
@@ -60,6 +66,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     final before = tester.getSize(find.byType(ReportDetail)).height;
+    expect(
+      tester.getTopLeft(find.text('Reporte en el mapa')).dy -
+          tester.getTopLeft(find.byType(ReportDetail)).dy,
+      lessThan(65),
+    );
     await tester.drag(find.text('Reporte en el mapa'), const Offset(0, -480));
     await tester.pumpAndSettle();
     expect(

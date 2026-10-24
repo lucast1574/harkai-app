@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:harkai/core/api_client.dart';
+import 'package:harkai/core/models.dart';
 import 'package:harkai/core/app_controller.dart';
 import 'package:harkai/core/app_scope.dart';
 import 'package:harkai/core/theme.dart';
@@ -83,6 +84,42 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+  testWidgets('background tap deselects while marker tap selects the point', (
+    tester,
+  ) async {
+    int selected = 0, cleared = 0;
+    final incident = Incident(
+      id: '0123456789abcdef01234567',
+      type: 'fire',
+      description: 'Prueba',
+      status: 'active',
+      latitude: -12.04,
+      longitude: -77.04,
+      verified: false,
+      createdAt: DateTime.now(),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CommunityMap(
+            center: const LatLng(-12.04, -77.04),
+            incidents: [incident],
+            onReport: (_) => selected++,
+            onBackgroundTap: () => cleared++,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.tap(find.byTooltip('Incendio · No verificado'));
+    await tester.pump();
+    expect(selected, 1);
+    expect(cleared, 0);
+    await tester.tapAt(const Offset(30, 100));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(cleared, 1);
+    await tester.pumpWidget(const SizedBox());
+  });
   test('dark sheets and focused inputs stay in the navy palette', () {
     final theme = appTheme(Brightness.dark);
     expect(theme.bottomSheetTheme.backgroundColor, theme.colorScheme.surface);

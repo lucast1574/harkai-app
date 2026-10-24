@@ -127,9 +127,11 @@ class _ReportDetailState extends State<ReportDetail> {
     final i = incident;
     final visual = i != null ? categoryVisual(i.type) : null;
     final body = SafeArea(
+      top: !widget.embedded,
+      bottom: !widget.embedded,
       child: ListView(
         controller: widget.scrollController,
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        padding: EdgeInsets.fromLTRB(20, widget.embedded ? 8 : 20, 20, 40),
         children: [
           if (widget.sheetHeader != null) widget.sheetHeader!,
           if (i != null && visual != null) ...[

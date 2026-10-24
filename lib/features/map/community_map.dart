@@ -20,6 +20,7 @@ class CommunityMap extends StatefulWidget {
   final List<SupportPlace> supportPlaces;
   final ValueChanged<Incident>? onReport;
   final ValueChanged<LatLng>? onPoint;
+  final VoidCallback? onBackgroundTap;
   final ValueChanged<LatLng>? onLongPressPoint;
   final bool fullScreen;
   final double initialZoom;
@@ -39,6 +40,7 @@ class CommunityMap extends StatefulWidget {
     this.supportPlaces = const [],
     this.onReport,
     this.onPoint,
+    this.onBackgroundTap,
     this.onLongPressPoint,
     this.fullScreen = false,
     this.initialZoom = 13.5,
@@ -130,9 +132,13 @@ class _CommunityMapState extends State<CommunityMap> {
             focusOnUser();
           }
         },
-        onTap: widget.onPoint == null
-            ? null
-            : (_, point) => widget.onPoint!(point),
+        onTap: (_, point) {
+          if (widget.onPoint != null) {
+            widget.onPoint!(point);
+          } else {
+            widget.onBackgroundTap?.call();
+          }
+        },
         onLongPress: widget.onLongPressPoint == null
             ? null
             : (_, point) => widget.onLongPressPoint!(point),
