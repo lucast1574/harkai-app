@@ -81,11 +81,15 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<bool> login() async {
+    final app = AppScope.of(context);
+    if (app.loading) await app.initialize();
+    if (!mounted) return false;
+    if (app.account != null) return true;
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
     );
-    return true;
+    return mounted && app.account != null;
   }
 
   Future<bool> create({String? initialType, LatLng? initialPoint}) async {
@@ -111,12 +115,11 @@ class _AppShellState extends State<AppShell> {
     return true;
   }
 
-  void openProfileOrLogin() {
+  Future<void> openProfileOrLogin() async {
     if (AppScope.of(context).account == null) {
-      login();
-    } else {
-      selectSection(8);
+      if (!await login()) return;
     }
+    if (mounted) selectSection(8);
   }
 
   Widget page() => switch (section) {
@@ -199,7 +202,7 @@ class _AppShellState extends State<AppShell> {
       });
     }
 
-    final isHomeMap = section == 0 || app.loading || app.error != null;
+    final isHomeMap = section == 0;
 
     return PopScope(
       canPop: false,
@@ -264,10 +267,10 @@ class _AppShellState extends State<AppShell> {
           selectedIndex: switch (section) {
             0 => 0,
             4 => 2,
-            8 => 3,
+            8 => 0,
             _ => 1,
           },
-          onDestinationSelected: (index) => selectSection([0, 1, 4, 8][index]),
+          onDestinationSelected: (index) => selectSection([0, 1, 4][index]),
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.map_outlined),
@@ -283,11 +286,6 @@ class _AppShellState extends State<AppShell> {
               icon: Icon(Icons.notifications_none_rounded),
               selectedIcon: Icon(Icons.notifications_rounded),
               label: 'Alertas',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline_rounded),
-              selectedIcon: Icon(Icons.person_rounded),
-              label: 'Cuenta',
             ),
           ],
         ),

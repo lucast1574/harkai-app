@@ -42,3 +42,9 @@ Emergencias consulta el último reporte de la cuenta y obtiene los teléfonos de
 ## Inicio de la aplicación
 
 La splash recupera el escudo y los colores originales, dura 1,7 segundos y da paso al mapa sin esperar a la API. Con reducir animaciones usa una transición breve sin movimiento. El mapa se monta desde el primer cuadro debajo de la splash y nunca se sustituye por una pantalla global de carga o error. La metadata y las consultas públicas del mapa no envían la sesión guardada; una sesión vencida se limpia sin bloquear el acceso público. Los errores de conexión aparecen dentro del panel del mapa.
+
+## Arranque y recuperación de sesión
+
+Antes del primer cuadro se restaura la cuenta desde almacenamiento seguro, sin esperar a la red. La validación y metadata se cargan después; un fallo de conexión no borra la sesión. La renovación guarda un ID aleatorio antes de enviar la solicitud: si se pierde la respuesta o se cierra el proceso, se reintenta la misma operación al abrir. El backend debe incluir la renovación recuperable; durante una actualización se admite el contrato anterior.
+
+El mapa puede usar una última posición del dispositivo de hasta 10 minutos y precisión de 250 m para encuadrar la zona y consultar reportes públicos. Es provisional: no habilita avisos de cercanía ni sustituye el GPS fresco exigido al reportar. Las actualizaciones de GPS se suscriben antes de esperar la lectura puntual, evitando que un timeout detenga la localización.

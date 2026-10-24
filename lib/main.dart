@@ -9,6 +9,12 @@ import 'features/splash/launch_experience.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final controller = AppController(ApiClient());
+  try {
+    // Read local identity before the first frame; network validation follows.
+    await controller.restoreSession();
+  } catch (error) {
+    controller.error = error.toString();
+  }
   runApp(HarkaiApp(controller: controller));
   await controller.initialize();
   return;

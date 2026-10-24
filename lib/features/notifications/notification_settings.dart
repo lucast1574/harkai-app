@@ -53,63 +53,97 @@ class _NotificationSettingsState extends State<NotificationSettings> {
     final enabled = app.notifications.enabled;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Notificaciones en este teléfono',
-              style: Theme.of(context).textTheme.titleLarge,
+            Row(
+              children: [
+                const Icon(Icons.notifications_outlined, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Alertas en este teléfono',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        !ready
+                            ? 'No disponibles por ahora'
+                            : enabled
+                            ? 'Activadas'
+                            : 'Desactivadas',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: enabled
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (busy)
+                  const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  Switch(
+                    value: enabled,
+                    onChanged: !ready
+                        ? null
+                        : (value) => value ? enablePush() : disablePush(),
+                  ),
+              ],
             ),
             const SizedBox(height: 12),
             const Text(
-              'También recibirás reportes no verificados. Se aplican tu radio y preferencias guardadas.',
+              'Usa tu ubicación en segundo plano para avisarte de reportes cercanos.',
+              style: TextStyle(fontSize: 13, height: 1.5),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Al activar, Harkai actualizará tu ubicación mientras te mueves, también al minimizar la app o bloquear la pantalla, con un aviso permanente de Android. Puedes detenerlo aquí. Si fuerzas el cierre de la app o Android detiene el servicio, se reanudará al abrirla.',
-            ),
-            if (!ready)
-              const MessageCard(
-                'Las notificaciones están pendientes de configuración. Puedes consultar las alertas en el mapa.',
-              ),
-            if (enabled)
-              const MessageCard('Dispositivo registrado para recibir alertas.'),
             if (enabled)
               AnimatedBuilder(
                 animation: app.notifications.tracking,
                 builder: (context, _) {
                   final tracking = app.notifications.tracking;
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      tracking.error ??
-                          (tracking.lastSync != null
-                              ? 'Tu zona se está actualizando automáticamente.'
-                              : tracking.running
-                              ? 'Esperando una ubicación precisa para actualizar tu zona…'
-                              : 'Activa el seguimiento para recibir alertas mientras te mueves.'),
-                    ),
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (tracking.error != null)
+                        MessageCard(tracking.error!, error: true),
+                      if (!tracking.running)
+                        TextButton(
+                          onPressed: busy ? null : enablePush,
+                          child: const Text('Reanudar seguimiento'),
+                        ),
+                    ],
                   );
                 },
               ),
             if (error != null) MessageCard(error!, error: true),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: !ready || busy ? null : enablePush,
-              child: Text(
-                busy
-                    ? 'Procesando…'
-                    : enabled
-                    ? 'Reactivar alertas durante mi recorrido'
-                    : 'Activar alertas durante mi recorrido',
-              ),
+            const ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              shape: Border(),
+              collapsedShape: Border(),
+              title: Text('Cómo funcionan', style: TextStyle(fontSize: 13)),
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    'Se aplican tu radio y preferencias. Las alertas pueden incluir reportes no verificados. Android muestra un aviso mientras se actualiza tu zona, incluso con la pantalla bloqueada. Si el sistema detiene el servicio, se reanuda al abrir Harkai. Puedes desactivarlo aquí.',
+                    style: TextStyle(fontSize: 13, height: 1.5),
+                  ),
+                ),
+              ],
             ),
-            if (enabled)
-              TextButton(
-                onPressed: busy ? null : disablePush,
-                child: const Text('Desactivar este teléfono'),
-              ),
           ],
         ),
       ),

@@ -41,6 +41,11 @@ void main() {
     );
     await tester.pump();
     expect(find.byType(Drawer), findsNothing);
+    expect(find.text('Cuenta'), findsNothing);
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).destinations,
+      hasLength(3),
+    );
     await tester.tap(find.text('Comunidad').last);
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(CommunityMap), findsNothing);
@@ -60,6 +65,25 @@ void main() {
       theme.inputDecorationTheme.focusedBorder!.borderSide,
       BorderSide.none,
     );
+  });
+  testWidgets('initial GPS focus is applied when the map first becomes ready', (
+    tester,
+  ) async {
+    const point = LatLng(-12.0464, -77.0428);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: CommunityMap(center: point, userPosition: point, focusRequest: 1),
+      ),
+    );
+    await tester.pump();
+    final camera = tester
+        .widget<FlutterMap>(find.byType(FlutterMap))
+        .mapController!
+        .camera;
+    expect(camera.zoom, 16.5);
+    expect(camera.center.latitude, closeTo(point.latitude, .00001));
+    expect(camera.center.longitude, closeTo(point.longitude, .00001));
+    await tester.pumpWidget(const SizedBox());
   });
   testWidgets('location focus zooms above the expanded reporting panel', (
     tester,

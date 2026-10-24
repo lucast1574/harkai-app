@@ -45,18 +45,19 @@ class _CommunityMapState extends State<CommunityMap> {
   final MapController _controller = MapController();
   bool _ready = false;
 
+  void focusOnUser() {
+    _controller.move(
+      widget.userPosition ?? widget.center,
+      16.5,
+      offset: Offset(0, (widget.topObstruction - widget.bottomObstruction) / 2),
+    );
+  }
+
   @override
   void didUpdateWidget(covariant CommunityMap oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (_ready && oldWidget.focusRequest != widget.focusRequest) {
-      _controller.move(
-        widget.userPosition ?? widget.center,
-        16.5,
-        offset: Offset(
-          0,
-          (widget.topObstruction - widget.bottomObstruction) / 2,
-        ),
-      );
+      focusOnUser();
       return;
     }
     if (_ready &&
@@ -87,7 +88,10 @@ class _CommunityMapState extends State<CommunityMap> {
       options: MapOptions(
         initialCenter: widget.center,
         initialZoom: widget.initialZoom,
-        onMapReady: () => _ready = true,
+        onMapReady: () {
+          _ready = true;
+          if (widget.focusRequest > 0) focusOnUser();
+        },
         onTap: widget.onPoint == null
             ? null
             : (_, point) => widget.onPoint!(point),

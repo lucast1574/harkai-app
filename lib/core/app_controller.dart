@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart' hide Category;
 import 'api_client.dart';
 import 'dart:convert';
@@ -30,12 +31,35 @@ class AppController extends ChangeNotifier {
   Map<String, dynamic> capabilities = {};
   bool loading = true;
   String? error;
+  Future<bool>? _initializing;
+  Future<bool>? _restoringSession;
   AppController(this.api);
-  Future<bool> initialize() async {
+  Future<bool> restoreSession() => _restoringSession ??= _restoreSession();
+
+  Future<bool> _restoreSession() async {
+    await api.restore();
+    final saved = api.savedAccount;
+    if (saved != null) {
+      try {
+        account = Account.fromJson(saved);
+        await restorePhoto();
+        notifyListeners();
+      } on TypeError {
+        // A malformed cached profile must not invalidate the saved tokens.
+      }
+    }
+    return api.hasSession;
+  }
+
+  Future<bool> initialize() => _initializing ??= _initialize().whenComplete(() {
+    _initializing = null;
+  });
+
+  Future<bool> _initialize() async {
     try {
-      await api.restore();
-      await loadMeta();
-      if (api.hasSession) await reloadAccount();
+      await restoreSession();
+      // Metadata connectivity must not prevent restoring the account.
+      await Future.wait([loadMeta(), if (api.hasSession) reloadAccount()]);
       if (account != null && capabilities['push_notifications'] == true) {
         await notifications.restore();
       }
@@ -60,7 +84,9 @@ class AppController extends ChangeNotifier {
 
   Future<Account?> reloadAccount() async {
     try {
-      account = Account.fromJson(await api.request('GET', 'me'));
+      final user = await api.request('GET', 'me');
+      account = Account.fromJson(user);
+      await api.cacheAccount(user);
       await restorePhoto();
     } on ApiException catch (e) {
       if (e.status != 401) rethrow;
@@ -84,10 +110,11 @@ class AppController extends ChangeNotifier {
     await api.save(session);
     account = Account.fromJson(session['user'] as Map<String, dynamic>);
     await restorePhoto();
-    if (capabilities['push_notifications'] == true) {
-      await notifications.restore();
-    }
+    error = null;
     notifyListeners();
+    if (capabilities['push_notifications'] == true) {
+      unawaited(notifications.restore());
+    }
     return account!;
   }
 
@@ -108,10 +135,11 @@ class AppController extends ChangeNotifier {
       );
     }
     await restorePhoto();
-    if (capabilities['push_notifications'] == true) {
-      await notifications.restore();
-    }
+    error = null;
     notifyListeners();
+    if (capabilities['push_notifications'] == true) {
+      unawaited(notifications.restore());
+    }
     return account!;
   }
 

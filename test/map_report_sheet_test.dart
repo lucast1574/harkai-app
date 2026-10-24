@@ -3,6 +3,41 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:harkai/features/reports/map_report_sheet.dart';
 
 void main() {
+  testWidgets('sheet handles a short viewport and subsequent resize', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(400, 160);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.bottomCenter,
+            child: MapReportSheet(
+              onReport: (_) {},
+              onEmergency: () {},
+              onHelp: () {},
+              children: const [],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    tester.view.physicalSize = const Size(400, 900);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('¿Qué está pasando?'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(
+      tester.getSize(find.byType(CustomScrollView)).height,
+      greaterThan(300),
+    );
+  });
+
   testWidgets(
     'category sheet stops at its content and keeps Harki actionable',
     (tester) async {

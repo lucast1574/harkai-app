@@ -77,208 +77,269 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> selectRadius(String value) async {
+    if (value != 'custom') {
+      setState(() => radius.text = value);
+      return;
+    }
+    final radiusForm = GlobalKey<FormState>();
+    var meters = radius.text;
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            0,
+            20,
+            MediaQuery.viewInsetsOf(context).bottom + 20,
+          ),
+          child: Form(
+            key: radiusForm,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  initialValue: meters,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Distancia en metros',
+                    helperText: 'Entre 100 y 10 000 m',
+                  ),
+                  onChanged: (value) => meters = value,
+                  validator: (value) {
+                    final distance = int.tryParse(value ?? '');
+                    return distance == null ||
+                            distance < 100 ||
+                            distance > 10000
+                        ? 'Elige de 100 a 10 000 metros.'
+                        : null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      if (radiusForm.currentState!.validate()) {
+                        Navigator.pop(context, meters);
+                      }
+                    },
+                    child: const Text('Usar esta distancia'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (mounted && selected != null) setState(() => radius.text = selected);
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = AppScope.of(context).account;
     if (user == null) return const SizedBox.shrink();
+    final colors = Theme.of(context).colorScheme;
     final roleLabel = switch (user.role) {
       'admin' => 'Administrador',
       'gov' => 'Gestión municipal',
-      _ => 'Vecino verificado',
+      _ => 'Miembro de la comunidad',
     };
-
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-      children: [
-        Row(
-          children: [
-            AccountAvatar(account: user, radius: 32),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user.name,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    user.email,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    roleLabel,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+    final radiusOptions = <String, String>{
+      '500': '500 m',
+      '1000': '1 km',
+      '2500': '2,5 km',
+      '5000': '5 km',
+      '10000': '10 km',
+      if (!['500', '1000', '2500', '5000', '10000'].contains(radius.text))
+        radius.text: '${radius.text} m',
+      'custom': 'Otra distancia…',
+    };
+    return Form(
+      key: form,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+        children: [
+          Center(child: AccountAvatar(account: user, radius: 38)),
+          const SizedBox(height: 14),
+          Text(
+            user.name,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              letterSpacing: -.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            user.email,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: colors.onSurfaceVariant, fontSize: 13),
+          ),
+          const SizedBox(height: 10),
+          Center(
+            child: Text(
+              roleLabel,
+              style: TextStyle(
+                color: colors.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        ListTile(
-          leading: const Icon(Icons.credit_card_off_rounded),
-          title: const Text('Bloquear tarjetas por robo'),
-          subtitle: const Text('Línea 1820'),
-          trailing: const Icon(Icons.call_outlined),
-          onTap: () => launchUrl(Uri(scheme: 'tel', path: '1820')),
-        ),
-        const SizedBox(height: 16),
-
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Form(
-              key: form,
+          ),
+          const SizedBox(height: 26),
+          Card(
+            child: ExpansionTile(
+              shape: const Border(),
+              collapsedShape: const Border(),
+              leading: const Icon(Icons.person_outline_rounded),
+              title: const Text(
+                'Datos personales',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(user.name),
+              childrenPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              children: [
+                AppField(
+                  label: 'Tu nombre',
+                  controller: name,
+                  maxLength: 80,
+                  validator: (v) => (v?.trim().length ?? 0) < 2
+                      ? 'Escribe al menos dos caracteres.'
+                      : null,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Tus datos y preferencias',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+                  const Row(
+                    children: [
+                      Icon(Icons.tune_rounded, size: 21),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Tu zona, a tu medida',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 14),
-                  AppField(
-                    label: 'Nombre visible en tu cuenta',
-                    controller: name,
-                    maxLength: 80,
-                    validator: (v) => (v?.trim().length ?? 0) < 2
-                        ? 'Escribe al menos dos caracteres.'
-                        : null,
-                  ),
+                  const SizedBox(height: 20),
                   AppChoiceField(
-                    label: 'Qué alertas recibir',
+                    label: 'Alertas que te interesan',
                     value: notifications,
                     options: const {
-                      'all': 'Todas, incluidas las no verificadas',
-                      'critical': 'Solo emergencias y seguridad',
-                      'none': 'Desactivadas',
+                      'all': 'Todas las alertas',
+                      'critical': 'Emergencias y seguridad',
+                      'none': 'Ninguna',
                     },
                     onChanged: (value) => setState(() => notifications = value),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Radio de notificaciones cercanas',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  const SizedBox(height: 14),
+                  AppChoiceField(
+                    label: 'Cerca de ti',
+                    value: radius.text,
+                    options: radiusOptions,
+                    onChanged: selectRadius,
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [500, 1000, 2500, 5000, 10000].map((preset) {
-                      final active = int.tryParse(radius.text) == preset;
-                      return ChoiceChip(
-                        label: Text(
-                          preset < 1000 ? '$preset m' : '${preset ~/ 1000} km',
-                        ),
-                        selected: active,
-                        onSelected: (_) =>
-                            setState(() => radius.text = '$preset'),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 12),
-                  AppField(
-                    label: 'Radio personalizado (100 a 10000 m)',
-                    controller: radius,
-                    keyboard: TextInputType.number,
-                    validator: (v) {
-                      final r = int.tryParse(v ?? '');
-                      return r == null || r < 100 || r > 10000
-                          ? 'Elige de 100 a 10000 metros.'
-                          : null;
+                  const SizedBox(height: 14),
+                  AppChoiceField(
+                    label: 'Apariencia',
+                    value: theme,
+                    options: const {
+                      'system': 'Como mi teléfono',
+                      'light': 'Clara',
+                      'dark': 'Oscura',
                     },
+                    onChanged: (value) => setState(() => theme = value),
                   ),
-                  const Text(
-                    'Tema de la aplicación',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      for (final opt in [
-                        ('system', 'Sistema'),
-                        ('light', 'Claro'),
-                        ('dark', 'Oscuro'),
-                      ])
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: ChoiceChip(
-                              label: SizedBox(
-                                width: double.infinity,
-                                child: Text(
-                                  opt.$2,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              selected: theme == opt.$1,
-                              onSelected: (_) => setState(() => theme = opt.$1),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  if (error != null) ...[
-                    const SizedBox(height: 12),
-                    MessageCard(error!, error: true),
-                  ],
-                  if (message != null) ...[
-                    const SizedBox(height: 12),
-                    MessageCard(message!),
-                  ],
+                  if (error != null) MessageCard(error!, error: true),
+                  if (message != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        'Cambios guardados',
+                        style: TextStyle(color: colors.primary),
+                      ),
+                    ),
                   const SizedBox(height: 18),
                   SizedBox(
                     width: double.infinity,
-                    child: FilledButton.icon(
+                    child: FilledButton(
                       onPressed: busy ? null : save,
-                      icon: const Icon(Icons.check_rounded, size: 18),
-                      label: Text(busy ? 'Guardando…' : 'Guardar preferencias'),
+                      child: Text(busy ? 'Guardando…' : 'Guardar cambios'),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-        ),
-        NotificationSettings(key: ValueKey(user.id)),
-        ListTile(
-          leading: const Icon(Icons.logout_rounded),
-          title: const Text('Cerrar sesión'),
-          onTap: () async {
-            await AppScope.of(context).logout();
-          },
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextButton(
-              onPressed: () => launchUrl(
-                Uri.parse('https://harkai.lat/privacidad/'),
-                mode: LaunchMode.externalApplication,
+          const SizedBox(height: 12),
+          NotificationSettings(key: ValueKey(user.id)),
+          const SizedBox(height: 20),
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+            leading: const Icon(Icons.credit_card_off_rounded),
+            title: const Text('Bloquear tarjetas'),
+            subtitle: const Text('Línea 1820'),
+            trailing: const Icon(Icons.call_outlined, size: 20),
+            onTap: () => launchUrl(Uri(scheme: 'tel', path: '1820')),
+          ),
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+            leading: const Icon(Icons.logout_rounded),
+            title: const Text('Cerrar sesión'),
+            onTap: busy
+                ? null
+                : () async {
+                    setState(() {
+                      busy = true;
+                      error = null;
+                    });
+                    try {
+                      await AppScope.of(context).logout();
+                    } catch (e) {
+                      if (mounted) setState(() => error = e.toString());
+                    } finally {
+                      if (mounted) setState(() => busy = false);
+                    }
+                  },
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                onPressed: () => launchUrl(
+                  Uri.parse('https://harkai.lat/privacidad/'),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: const Text('Privacidad'),
               ),
-              child: const Text('Privacidad'),
-            ),
-            const Text('·'),
-            TextButton(
-              onPressed: () => launchUrl(
-                Uri.parse('https://harkai.lat/eliminar-cuenta/'),
-                mode: LaunchMode.externalApplication,
+              TextButton(
+                onPressed: () => launchUrl(
+                  Uri.parse('https://harkai.lat/eliminar-cuenta/'),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: const Text('Eliminar cuenta'),
               ),
-              child: const Text('Eliminar cuenta'),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

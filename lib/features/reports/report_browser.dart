@@ -56,6 +56,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
   bool? covered;
   String? coverageError;
   LatLng? userPosition;
+  LatLng? cachedPosition;
   double userAccuracy = 1000;
   String? districtName, provinceName;
   LatLng? resolvedPoint;
@@ -90,6 +91,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
   int supportGeneration = 0;
   static const supportRadius = 5000;
   int focusRequest = 0;
+  bool focusedOnArrival = false;
   bool locating = false;
   double sheetExtent = .16;
   Timer? refreshTimer;
@@ -102,6 +104,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
       location = ForegroundLocation(
         track: !widget.history,
         onPosition: acceptPosition,
+        onCachedPosition: widget.homeMode ? acceptCachedPosition : null,
         onError: (e) {
           if (mounted) setState(() => error = e.toString());
           return false;
@@ -120,13 +123,18 @@ class _ReportBrowserState extends State<ReportBrowser> {
       }
       Future.microtask(() async {
         unawaited(load());
-        if (!widget.history) await location!.start();
+        if (!widget.history) {
+          await location!.start(requestPermission: widget.homeMode);
+        }
       });
     }
   }
 
   Future<int> load({bool more = false, bool background = false}) async {
-    if (!mounted || (!widget.history && userPosition == null)) return 0;
+    if (!mounted ||
+        (!widget.history && userPosition == null && cachedPosition == null)) {
+      return 0;
+    }
     final version = ++generation;
     setState(() {
       busy = true;
@@ -251,6 +259,10 @@ class _ReportBrowserState extends State<ReportBrowser> {
       positionTime = p.timestamp;
       if (p.accuracy <= 250) {
         center = userPosition!;
+        if (widget.homeMode && !focusedOnArrival) {
+          focusedOnArrival = true;
+          focusRequest++;
+        }
       }
     });
     if (p.accuracy <= 250) {
@@ -258,6 +270,19 @@ class _ReportBrowserState extends State<ReportBrowser> {
         Future.wait([load(background: true), loadCoverage(p), loadDistrict(p)]),
       );
     }
+    return true;
+  }
+
+  Future<bool> acceptCachedPosition(Position p) async {
+    if (!mounted || userPosition != null) return false;
+    setState(() {
+      cachedPosition = LatLng(p.latitude, p.longitude);
+      center = cachedPosition!;
+      focusRequest++;
+    });
+    // Public nearby data may use this camera position. Proximity notifications
+    // continue to require userPosition, accuracy and a fresh timestamp.
+    unawaited(load());
     return true;
   }
 
@@ -389,7 +414,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
                 DateTime.now().difference(positionTime!) <
                     const Duration(minutes: 2),
             center: center,
-            userPosition: userPosition,
+            userPosition: userPosition ?? cachedPosition,
             incidents: items,
             supportPlaces: supportPlaces,
             onReport: open,

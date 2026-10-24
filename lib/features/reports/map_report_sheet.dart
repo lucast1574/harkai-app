@@ -39,6 +39,10 @@ class _MapReportSheetState extends State<MapReportSheet> {
     final children = widget.children;
     return LayoutBuilder(
       builder: (context, constraints) {
+        final availableHeight = constraints.maxHeight;
+        if (!availableHeight.isFinite || availableHeight <= 0) {
+          return const SizedBox.shrink();
+        }
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final box =
               contentKey.currentContext?.findRenderObject() as RenderBox?;
@@ -48,18 +52,19 @@ class _MapReportSheetState extends State<MapReportSheet> {
             setState(() => contentHeight = height);
           }
         });
-        final maximum = ((contentHeight ?? 420) / constraints.maxHeight).clamp(
+        final maximum = ((contentHeight ?? 420) / availableHeight).clamp(
           .22,
           .65,
         );
-        final minimum = (110 / constraints.maxHeight).clamp(.10, maximum);
+        final minimum = (110 / availableHeight).clamp(.10, maximum);
         return DraggableScrollableSheet(
           controller: sheetController,
           initialChildSize: minimum,
           minChildSize: minimum,
           maxChildSize: maximum,
-          snap: true,
-          snapSizes: [minimum, maximum],
+          // Flutter includes both endpoints automatically. A short viewport
+          // can make them equal, in which case there is nothing to snap to.
+          snap: minimum < maximum,
           expand: false,
           builder: (context, controller) => Material(
             color: colors.surface,
@@ -86,7 +91,7 @@ class _MapReportSheetState extends State<MapReportSheet> {
                             if (!sheetController.isAttached) return;
                             sheetController.jumpTo(
                               (sheetController.size -
-                                      details.delta.dy / constraints.maxHeight)
+                                      details.delta.dy / availableHeight)
                                   .clamp(minimum, maximum),
                             );
                           },

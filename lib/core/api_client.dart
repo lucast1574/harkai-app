@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -15,12 +16,23 @@ class ApiClient {
   final FlutterSecureStorage storage;
   Map<String, dynamic>? _session;
   Future<bool>? _refreshing;
+  Future<void> _storageWrite = Future.value();
   int _generation = 0;
   ApiClient({http.Client? transport, FlutterSecureStorage? storage})
     : transport = transport ?? http.Client(),
       storage = storage ?? const FlutterSecureStorage();
   bool get hasSession => _session != null;
+  Map<String, dynamic>? get savedAccount =>
+      _session?['user'] as Map<String, dynamic>?;
+
+  Future<void> cacheAccount(Map<String, dynamic> user) async {
+    if (_session == null) return;
+    await save({..._session!, 'user': user});
+  }
+
   Future<bool> restore() async {
+    if (hasSession) return true;
+    await _storageWrite;
     final value = await storage.read(key: sessionKey);
     if (value == null) return false;
     try {
@@ -41,15 +53,25 @@ class ApiClient {
   }
 
   Future<bool> save(Map<String, dynamic> session) async {
-    await storage.write(key: sessionKey, value: jsonEncode(session));
     _session = session;
+    await _persist(
+      () => storage.write(key: sessionKey, value: jsonEncode(session)),
+    );
     return true;
+  }
+
+  Future<void> _persist(Future<void> Function() operation) {
+    final next = _storageWrite
+        .catchError((Object _) {})
+        .then((_) => operation());
+    _storageWrite = next;
+    return next;
   }
 
   Future<bool> clear() async {
     _generation++;
     _session = null;
-    await storage.delete(key: sessionKey);
+    await _persist(() => storage.delete(key: sessionKey));
     return true;
   }
 
@@ -104,18 +126,42 @@ class ApiClient {
     final token = _session?['refresh_token'];
     final generation = _generation;
     if (token == null) return false;
-    final response = await _send(
+    final random = Random.secure();
+    final rotationID =
+        _session?['pending_rotation_id'] as String? ??
+        base64UrlEncode(
+          List<int>.generate(32, (_) => random.nextInt(256)),
+        ).replaceAll('=', '');
+    // Persist before the server consumes the old refresh token. On relaunch,
+    // retrying this exact ID recovers the same tokens instead of logging out.
+    await save({..._session!, 'pending_rotation_id': rotationID});
+    if (generation != _generation) return false;
+    var response = await _send(
       'POST',
       'auth/refresh',
-      body: {'refresh_token': token},
+      body: {'refresh_token': token, 'rotation_id': rotationID},
+      authenticated: false,
     );
+    if (response.statusCode == 400 && generation == _generation) {
+      // Older servers reject the new optional field during a rolling upgrade.
+      response = await _send(
+        'POST',
+        'auth/refresh',
+        body: {'refresh_token': token},
+        authenticated: false,
+      );
+    }
     if (generation != _generation) return false;
     if (response.statusCode == 401) {
       await clear();
       return false;
     }
     final result = _decode(response);
-    await save(result);
+    await save({
+      ...result,
+      if (result['user'] == null && _session?['user'] != null)
+        'user': _session!['user'],
+    });
     return true;
   }
 
@@ -148,6 +194,7 @@ class ApiClient {
     String? contentType,
     bool authenticated = true,
   }) async {
+    final sentToken = _session?['access_token'];
     var response = await _send(
       method,
       path,
@@ -159,7 +206,8 @@ class ApiClient {
     if (authenticated &&
         response.statusCode == 401 &&
         !path.startsWith('auth/') &&
-        await _refresh()) {
+        hasSession &&
+        (sentToken != _session?['access_token'] || await _refresh())) {
       response = await _send(
         method,
         path,
