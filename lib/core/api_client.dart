@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_error.dart';
@@ -34,6 +35,9 @@ class ApiClient {
     if (hasSession) return true;
     await _storageWrite;
     final value = await storage.read(key: sessionKey);
+    if (kDebugMode) {
+      debugPrint('Harkai auth: saved session present=${value != null}');
+    }
     if (value == null) return false;
     try {
       final decoded = jsonDecode(value) as Map<String, dynamic>;
@@ -42,6 +46,11 @@ class ApiClient {
         throw const FormatException();
       }
       _session = decoded;
+      if (kDebugMode) {
+        debugPrint(
+          'Harkai auth: restored; cached profile=${savedAccount != null}; pending rotation=${decoded['pending_rotation_id'] != null}',
+        );
+      }
       return true;
     } on FormatException {
       await clear();
@@ -152,6 +161,9 @@ class ApiClient {
       );
     }
     if (generation != _generation) return false;
+    if (kDebugMode) {
+      debugPrint('Harkai auth: refresh HTTP ${response.statusCode}');
+    }
     if (response.statusCode == 401) {
       await clear();
       return false;
