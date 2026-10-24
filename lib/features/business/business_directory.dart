@@ -80,7 +80,7 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
       context,
       MaterialPageRoute(
         builder: (_) => Scaffold(
-          appBar: AppBar(title: const Text('Mi negocio')),
+          appBar: AppBar(title: const Text('Tu punto en el mapa')),
           body: const BusinessDirectory(own: true),
         ),
       ),
@@ -108,14 +108,16 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
       padding: const EdgeInsets.all(20),
       children: [
         Text(
-          widget.own ? 'Tu negocio, cerca de los vecinos' : 'Descubre tu zona',
+          widget.own
+              ? 'Tu negocio, cerca de los vecinos'
+              : 'Tu lugar en la comunidad',
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 8),
         Text(
           widget.own
               ? 'Prepara tu punto y envíalo a revisión. La publicación requiere un pago vigente. Los pagos con Stripe están pendientes de habilitar.'
-              : 'Negocios promocionados cerca de ti. Toca uno para verlo en el mapa.',
+              : 'Descubre negocios de tu zona o pon el tuyo en el mapa.',
         ),
         if (!widget.own)
           Padding(

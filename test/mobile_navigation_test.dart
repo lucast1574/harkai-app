@@ -42,11 +42,12 @@ void main() {
     await tester.pump();
     expect(find.byType(Drawer), findsNothing);
     expect(find.text('Alertas'), findsNothing);
+    expect(find.text('Ponte en el mapa'), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsNothing);
     expect(find.text('Cuenta'), findsNothing);
     expect(
       tester.widget<NavigationBar>(find.byType(NavigationBar)).destinations,
-      hasLength(2),
+      hasLength(3),
     );
     await tester.tap(find.text('Comunidad').last);
     await tester.pump(const Duration(milliseconds: 400));

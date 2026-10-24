@@ -75,7 +75,7 @@ class _AppShellState extends State<AppShell> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
             ),
-            for (final index in [2, 3, 4, 5])
+            for (final index in [2, 3, 5])
               ListTile(
                 leading: Icon(AppDestinations.entries[index].$1),
                 title: Text(AppDestinations.entries[index].$2),
@@ -287,9 +287,10 @@ class _AppShellState extends State<AppShell> {
           selectedIndex: switch (section) {
             0 => 0,
             6 => 0,
+            4 => 2,
             _ => 1,
           },
-          onDestinationSelected: (index) => selectSection([0, 1][index]),
+          onDestinationSelected: (index) => selectSection([0, 1, 4][index]),
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.map_outlined),
@@ -300,6 +301,11 @@ class _AppShellState extends State<AppShell> {
               icon: Icon(Icons.view_agenda_outlined),
               selectedIcon: Icon(Icons.view_agenda_rounded),
               label: 'Comunidad',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.add_business_outlined),
+              selectedIcon: Icon(Icons.add_business_rounded),
+              label: 'Ponte en el mapa',
             ),
           ],
         ),
