@@ -1,3 +1,4 @@
+import '../map/map_glass_surface.dart';
 import 'dart:async';
 import '../map/map_target.dart';
 import '../map/map_target_sheet.dart';
@@ -503,28 +504,45 @@ class _ReportBrowserState extends State<ReportBrowser> {
             bottom: false,
             child: Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: MapLocationHeader(
-                account: app.account,
-                district: districtName,
-                province: provinceName,
-                hasPosition: userPosition != null,
-                onExplore: widget.onOpenDrawer,
-                onProfile: widget.onOpenProfile,
+              child: MapGlassSurface(
+                neutral: true,
+                radius: 26,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    MapLocationHeader(
+                      embedded: true,
+                      account: app.account,
+                      district: districtName,
+                      province: provinceName,
+                      hasPosition: userPosition != null,
+                      onExplore: widget.onOpenDrawer,
+                      onProfile: widget.onOpenProfile,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Divider(
+                        height: 1,
+                        thickness: .5,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: .1),
+                      ),
+                    ),
+                    MapCategoryFilters(
+                      embedded: true,
+                      selected: type,
+                      count: items.length,
+                      onChanged: (value) {
+                        setState(() => type = value);
+                        load(background: true);
+                      },
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
-        Positioned(
-          top: MediaQuery.paddingOf(context).top + 76,
-          left: 0,
-          right: 0,
-          child: MapCategoryFilters(
-            selected: type,
-            count: items.length,
-            onChanged: (value) {
-              setState(() => type = value);
-              load(background: true);
-            },
           ),
         ),
         Positioned(

@@ -25,7 +25,7 @@ class MapGlassSurface extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Material(
           color: Colors.transparent,
           child: Ink(
@@ -37,12 +37,12 @@ class MapGlassSurface extends StatelessWidget {
                 colors: dark
                     ? [
                         neutral
-                            ? harkaiBlue.withValues(alpha: .64)
+                            ? harkaiBlue.withValues(alpha: .88)
                             : tint.withValues(
                                 alpha: accent == null ? 0.64 : 0.85,
                               ),
                         neutral
-                            ? harkaiBlue.withValues(alpha: .54)
+                            ? harkaiBlue.withValues(alpha: .72)
                             : tint.withValues(
                                 alpha: accent == null ? 0.78 : 0.93,
                               ),
@@ -56,7 +56,7 @@ class MapGlassSurface extends StatelessWidget {
                 color:
                     accent?.withValues(alpha: dark ? 0.48 : 0.55) ??
                     (neutral
-                        ? Colors.white.withValues(alpha: dark ? .12 : .55)
+                        ? Colors.white.withValues(alpha: dark ? .06 : .55)
                         : dark
                         ? Colors.white.withValues(alpha: .09)
                         : Colors.black.withValues(alpha: .06)),
