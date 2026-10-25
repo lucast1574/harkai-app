@@ -15,11 +15,13 @@ class MapTargetSheet extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) => DraggableScrollableSheet(
-    initialChildSize: .38,
+    initialChildSize: target.support?.photoUrls.isNotEmpty == true ? .52 : .38,
     minChildSize: .24,
     maxChildSize: .96,
     snap: true,
-    snapSizes: const [.38, .65, .96],
+    snapSizes: target.support?.photoUrls.isNotEmpty == true
+        ? const [.52, .65, .96]
+        : const [.38, .65, .96],
     shouldCloseOnMinExtent: false,
     builder: (context, controller) {
       final header = Column(
@@ -79,6 +81,14 @@ class MapTargetSheet extends StatelessWidget {
                 embedded: true,
                 scrollController: controller,
                 sheetHeader: header,
+              )
+            : target.support != null
+            ? ListView(
+                controller: controller,
+                padding: EdgeInsets.zero,
+                children: [
+                  SupportPlaceDetails(place: target.support!, onClose: onClose),
+                ],
               )
             : ListView(
                 controller: controller,

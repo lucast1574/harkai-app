@@ -73,80 +73,146 @@ class SupportPlace {
 
 class SupportPlaceDetails extends StatelessWidget {
   final SupportPlace place;
-  const SupportPlaceDetails({super.key, required this.place});
+  final VoidCallback? onClose;
+  const SupportPlaceDetails({super.key, required this.place, this.onClose});
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(24),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Center(
-          child: Container(
-            width: 36,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: .2),
-              borderRadius: BorderRadius.circular(4),
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 32,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colors.onSurface.withValues(alpha: .25),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                if (onClose != null)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      tooltip: 'Cerrar ficha',
+                      padding: EdgeInsets.zero,
+                      onPressed: onClose,
+                      icon: const Icon(Icons.close_rounded, size: 22),
+                    ),
+                  ),
+              ],
             ),
           ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          place.name,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        if (place.photoUrls.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              place.photoUrls.first,
-              width: double.infinity,
-              height: 180,
-              fit: BoxFit.cover,
-              semanticLabel: 'Foto de ${place.name}',
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                Icons.local_hospital_outlined,
+                size: 15,
+                color: colors.primary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                place.kind == 'hospital'
+                    ? 'Hospital o clínica'
+                    : 'Centro de salud',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            place.name,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontSize: 21,
+              fontWeight: FontWeight.w700,
+              height: 1.2,
             ),
           ),
-        ],
-        const SizedBox(height: 16),
-        for (final number in place.contactPhones)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () async {
-                  final opened = await launchUrl(
-                    Uri(scheme: 'tel', path: number),
-                    mode: LaunchMode.externalApplication,
-                  );
-                  if (!opened && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('No se pudo abrir el teléfono.'),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.call_outlined),
-                label: Text('Llamar · $number'),
+          if (place.photoUrls.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                place.photoUrls.first,
+                width: double.infinity,
+                height: 170,
+                fit: BoxFit.cover,
+                semanticLabel: 'Foto de ${place.name}',
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
             ),
-          ),
-        if (place.contactPhones.isEmpty)
-          Text(
-            'Teléfono no disponible',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ],
+          if (place.address.isNotEmpty || place.district.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 18,
+                  color: colors.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    [
+                      place.address,
+                      place.district,
+                    ].where((part) => part.isNotEmpty).join(' · '),
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.4,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-      ],
-    ),
-  );
+          ],
+          const SizedBox(height: 18),
+          for (final number in place.contactPhones)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () async {
+                    final opened = await launchUrl(
+                      Uri(scheme: 'tel', path: number),
+                      mode: LaunchMode.externalApplication,
+                    );
+                    if (!opened && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No se pudo abrir el teléfono.'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.call_outlined, size: 18),
+                  label: Text('Llamar · $number'),
+                ),
+              ),
+            ),
+          if (place.contactPhones.isEmpty)
+            Text(
+              'Teléfono no disponible',
+              style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+            ),
+        ],
+      ),
+    );
+  }
 }
