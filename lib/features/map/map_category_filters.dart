@@ -32,6 +32,7 @@ class MapCategoryFilters extends StatelessWidget {
           final dark = Theme.of(context).brightness == Brightness.dark;
           return Center(
             child: MapGlassSurface(
+              neutral: true,
               accent: active ? (type.isEmpty ? green : visual.color) : null,
               child: InkWell(
                 onTap: () => onChanged(type),

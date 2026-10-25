@@ -37,12 +37,12 @@ class MapGlassSurface extends StatelessWidget {
                 colors: dark
                     ? [
                         neutral
-                            ? harkaiBlue.withValues(alpha: .82)
+                            ? harkaiBlue.withValues(alpha: .64)
                             : tint.withValues(
                                 alpha: accent == null ? 0.64 : 0.85,
                               ),
                         neutral
-                            ? harkaiBlue.withValues(alpha: .72)
+                            ? harkaiBlue.withValues(alpha: .54)
                             : tint.withValues(
                                 alpha: accent == null ? 0.78 : 0.93,
                               ),
