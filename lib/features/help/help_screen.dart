@@ -5,6 +5,7 @@ import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets.dart';
 import '../reports/report_repository.dart';
+import 'safety_report.dart';
 
 class HelpScreen extends StatefulWidget {
   const HelpScreen({super.key});
@@ -213,7 +214,8 @@ class _HelpScreenState extends State<HelpScreen> {
         ),
       ),
 
-      // District Directory
+      const SizedBox(height: 12),
+      const SafetyReportButton(),
     ],
   );
 }

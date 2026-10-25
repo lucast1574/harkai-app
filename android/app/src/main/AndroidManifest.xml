@@ -21,5 +21,5 @@
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="harkai_reports" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notifications" />
     </application>
-    <queries><intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent><intent><action android:name="android.intent.action.VIEW" /><data android:scheme="tel" /></intent></queries>
+    <queries><intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent><intent><action android:name="android.intent.action.VIEW" /><data android:scheme="tel" /></intent><intent><action android:name="android.intent.action.VIEW" /><data android:scheme="mailto" /></intent></queries>
 </manifest>

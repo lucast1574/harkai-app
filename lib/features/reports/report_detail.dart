@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../shared/widgets.dart';
 import '../auth/login_screen.dart';
 import '../community/report_comments.dart';
+import '../help/safety_report.dart';
 import 'report_repository.dart';
 
 class ReportDetail extends StatefulWidget {
@@ -342,6 +343,7 @@ class _ReportDetailState extends State<ReportDetail> {
               key: ValueKey('${i.id}:${app.account?.id ?? 'guest'}'),
               incidentId: i.id,
             ),
+            SafetyReportButton(incidentId: i.id),
           ],
           if (error != null) MessageCard(error!, error: true, onRetry: load),
           if (busy)
