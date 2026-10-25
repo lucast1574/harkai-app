@@ -7,6 +7,7 @@ import '../location/location_service.dart';
 import 'report_photo.dart';
 import 'report_repository.dart';
 import 'voice_input.dart';
+import 'report_input_action.dart';
 
 class QuickReportSheet extends StatefulWidget {
   final String category;
@@ -21,6 +22,7 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
   Position? position;
   String? mediaId, photoName, error;
   bool busy = false, locating = true, share = false, voiceBusy = false;
+  bool photoBusy = false;
   bool get pet => widget.category == 'pet';
 
   @override
@@ -64,6 +66,7 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
   Future<bool> photo() async {
     setState(() {
       busy = true;
+      photoBusy = true;
       error = null;
     });
     final api = AppScope.of(context).api;
@@ -80,7 +83,12 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
       if (mounted) setState(() => error = e.toString());
       return false;
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) {
+        setState(() {
+          busy = false;
+          photoBusy = false;
+        });
+      }
     }
   }
 
@@ -202,7 +210,39 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
                         onTranscript: (value, _) =>
                             setState(() => text.text = value),
                       ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
+                    ReportInputAction(
+                      icon: mediaId == null
+                          ? Icons.add_a_photo_rounded
+                          : Icons.check_circle_outline_rounded,
+                      title: photoBusy
+                          ? 'Preparando foto…'
+                          : mediaId == null
+                          ? 'Añadir una foto'
+                          : 'Foto adjunta',
+                      subtitle: mediaId == null
+                          ? 'Opcional · muestra lo que está pasando.'
+                          : 'Lista para publicar. Toca para cambiarla.',
+                      busy: photoBusy,
+                      onTap: busy || voiceBusy
+                          ? null
+                          : () {
+                              photo();
+                            },
+                      trailing: mediaId == null
+                          ? null
+                          : IconButton(
+                              tooltip: 'Quitar foto',
+                              onPressed: busy || voiceBusy
+                                  ? null
+                                  : () => setState(() {
+                                      mediaId = null;
+                                      photoName = null;
+                                    }),
+                              icon: const Icon(Icons.close_rounded, size: 19),
+                            ),
+                    ),
+                    const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -237,25 +277,6 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
                     ),
                     ...[
                       const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        onPressed: busy ? null : photo,
-                        icon: const Icon(Icons.add_a_photo_outlined),
-                        label: Text(
-                          photoName == null
-                              ? 'Añadir foto opcional'
-                              : 'Foto adjunta',
-                        ),
-                      ),
-                      if (mediaId != null)
-                        TextButton(
-                          onPressed: busy
-                              ? null
-                              : () => setState(() {
-                                  mediaId = null;
-                                  photoName = null;
-                                }),
-                          child: const Text("Quitar foto"),
-                        ),
                       if (pet)
                         TextFormField(
                           controller: contact,

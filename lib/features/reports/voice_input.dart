@@ -6,6 +6,7 @@ import 'package:record/record.dart';
 import '../../core/app_scope.dart';
 import '../../core/models.dart';
 import '../../shared/widgets.dart';
+import 'report_input_action.dart';
 
 class VoiceInput extends StatefulWidget {
   final bool disabled;
@@ -25,7 +26,7 @@ class _VoiceInputState extends State<VoiceInput> {
   final recorder = AudioRecorder();
   Timer? timer;
   String? path, error;
-  bool recording = false, busy = false;
+  bool recording = false, busy = false, transcribing = false;
   int seconds = 0;
   @override
   void dispose() {
@@ -50,6 +51,7 @@ class _VoiceInputState extends State<VoiceInput> {
     widget.onBusyChanged?.call(true);
     setState(() {
       busy = true;
+      transcribing = false;
       error = null;
     });
     try {
@@ -98,6 +100,7 @@ class _VoiceInputState extends State<VoiceInput> {
     setState(() {
       busy = true;
       recording = false;
+      transcribing = true;
       error = null;
     });
     final api = AppScope.of(context).api;
@@ -135,26 +138,35 @@ class _VoiceInputState extends State<VoiceInput> {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      OutlinedButton.icon(
-        onPressed: widget.disabled || busy
+      ReportInputAction(
+        icon: recording ? Icons.stop_rounded : Icons.mic_rounded,
+        active: recording,
+        busy: busy,
+        onTap: widget.disabled || busy
             ? null
+            : () {
+                recording ? finish() : start();
+              },
+        title: busy
+            ? (transcribing ? 'Transcribiendo audio…' : 'Preparando micrófono…')
             : recording
-            ? finish
-            : start,
-        icon: Icon(recording ? Icons.stop : Icons.mic_none),
-        label: Text(
-          busy
-              ? 'Transcribiendo…'
-              : recording
-              ? 'Finalizar audio · $seconds s'
-              : 'Describir con mi voz',
-        ),
-      ),
-      const Text(
-        'Hasta 60 segundos. Revisa y corrige el texto antes de publicar.',
+            ? 'Finalizar grabación'
+            : 'Describir con mi voz',
+        subtitle: recording
+            ? 'Toca para transcribir y revisar tu descripción.'
+            : 'Hasta 60 s · revisa el texto antes de publicar.',
+        trailing: recording
+            ? Text(
+                '0:${seconds.toString().padLeft(2, '0')}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              )
+            : null,
       ),
       if (error != null) MessageCard(error!, error: true),
-      const SizedBox(height: 16),
     ],
   );
 }
