@@ -1,3 +1,4 @@
+import '../notifications/notification_permissions.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_scope.dart';
@@ -142,6 +143,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onChanged: appearance,
           ),
           const SizedBox(height: 16),
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+            leading: const Icon(Icons.phonelink_setup_rounded),
+            title: const Text('Permisos del teléfono'),
+            subtitle: const Text('Ubicación, avisos y batería'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const NotificationPermissions(),
+              ),
+            ),
+          ),
           ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 8),
             leading: const Icon(Icons.credit_card_off_rounded),

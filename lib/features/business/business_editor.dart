@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/app_scope.dart';
 import '../../shared/app_choice_field.dart';
@@ -81,9 +82,33 @@ class _BusinessEditorState extends State<BusinessEditor> {
   }
 
   Future<void> photo() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Elegir de mi galería'),
+              subtitle: const Text('Fachada, logo o imagen de tu lugar'),
+              onTap: () => Navigator.pop(sheet, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Tomar una foto'),
+              onTap: () => Navigator.pop(sheet, ImageSource.camera),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || source == null) return;
     setState(() => busy = true);
     try {
-      final p = await pickReportPhoto(AppScope.of(context).api);
+      final p = await pickReportPhoto(AppScope.of(context).api, source: source);
       if (mounted && p != null) setState(() => media = p.id);
     } catch (e) {
       if (mounted) setState(() => error = e.toString());

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/api_client.dart';
+import '../location/location_stream.dart';
 
 /// Owned by the notification subscription, independent of map navigation.
 class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
@@ -50,17 +51,20 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
       return false;
     }
     if (device() == null) return false;
+    await _positions?.cancel();
+    if (version != _generation || device() == null) return false;
+    _timer?.cancel();
     running = true;
     error = null;
     final settings = defaultTargetPlatform == TargetPlatform.android
         ? AndroidSettings(
             accuracy: LocationAccuracy.high,
-            distanceFilter: 10,
+            distanceFilter: 0,
             intervalDuration: const Duration(seconds: 5),
             foregroundNotificationConfig: const ForegroundNotificationConfig(
               notificationTitle: 'Alertas durante tu recorrido',
               notificationText:
-                  'Harkai actualiza tu zona mientras te mueves. Gestiona las alertas en Mi cuenta.',
+                  'Harkai usa tu ubicación para avisarte de riesgos y lugares cercanos. Permisos en Mi cuenta.',
               notificationChannelName: 'Ubicación para alertas',
               notificationIcon: AndroidResource(name: 'ic_notifications'),
               enableWakeLock: true,
@@ -75,19 +79,31 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
       (position) {
         if (version != _generation) return;
         _latest = position;
+        if (usableAlertPosition(position, now())) running = true;
         if (lastSync == null) unawaited(sync());
       },
       onError: (Object failure) {
         if (version != _generation) return;
+        running = false;
         error =
-            'No se está recibiendo ubicación. Revisa el GPS y sus permisos.';
+            'Se interrumpió el GPS. Se reintentará al volver a estar disponible.';
+        notifyListeners();
+      },
+      onDone: () {
+        if (version != _generation) return;
+        running = false;
+        error =
+            'La ubicación se ha interrumpido. Abre Harkai para recuperarla.';
         notifyListeners();
       },
     );
-    _timer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => unawaited(sync()),
-    );
+    _timer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (!running) {
+        unawaited(start().catchError((_) => false));
+      } else {
+        unawaited(sync());
+      }
+    });
     notifyListeners();
     return true;
   }
@@ -201,7 +217,7 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
 }
 
 Stream<Position> watchAlertPositions(LocationSettings settings) =>
-    Geolocator.getPositionStream(locationSettings: settings);
+    sharedLocationSource.watch(settings);
 
 bool usableAlertPosition(Position position, DateTime now) =>
     position.latitude.isFinite &&

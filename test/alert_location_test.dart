@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -102,6 +103,38 @@ void main() {
         usableAlertPosition(position(now, accuracy: double.nan), now),
         false,
       );
+    },
+  );
+  test(
+    'GPS stream interruption is visible and resumes with a fresh stream',
+    () async {
+      final first = StreamController<Position>(),
+          second = StreamController<Position>();
+      var subscriptions = 0;
+      final api = ApiClient(
+        transport: MockClient((_) async => http.Response('{}', 200)),
+      );
+      final tracker = AlertLocation(
+        api,
+        () => 'device',
+        checkPermission: () async => LocationPermission.always,
+        watch: (settings) {
+          expect(settings.distanceFilter, 0);
+          subscriptions++;
+          return subscriptions == 1 ? first.stream : second.stream;
+        },
+      );
+      await tracker.start();
+      await first.close();
+      expect(tracker.running, false);
+      expect(tracker.error, isNotNull);
+      tracker.didChangeAppLifecycleState(AppLifecycleState.resumed);
+      await Future<void>.delayed(Duration.zero);
+      expect(subscriptions, 2);
+      expect(tracker.running, true);
+      await tracker.stop();
+      tracker.dispose();
+      await second.close();
     },
   );
 }

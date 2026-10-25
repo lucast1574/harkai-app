@@ -2,8 +2,9 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
 import 'location_service.dart';
+import 'location_stream.dart';
 
-/// Observes location only while the application is visible. No background permission.
+/// The map listens while visible; consented notifications own the shared background service.
 class ForegroundLocation with WidgetsBindingObserver {
   final Future<bool> Function(Position) onPosition;
   final bool Function(Object) onError;
@@ -58,14 +59,15 @@ class ForegroundLocation with WidgetsBindingObserver {
       if (disposed || !active || version != generation) return false;
       var receivedPosition = false;
       if (track) {
-        updates =
-            Geolocator.getPositionStream(
-              locationSettings: AndroidSettings(
+        updates = sharedLocationSource
+            .watch(
+              AndroidSettings(
                 accuracy: LocationAccuracy.high,
                 distanceFilter: 5,
                 intervalDuration: const Duration(seconds: 5),
               ),
-            ).listen(
+            )
+            .listen(
               (p) {
                 if (!disposed && active && version == generation) {
                   receivedPosition = true;
