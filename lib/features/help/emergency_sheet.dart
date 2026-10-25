@@ -42,8 +42,8 @@ class _EmergencySheetState extends State<EmergencySheet> {
         if (items.isNotEmpty) {
           final report = items.first as Map<String, dynamic>;
           lastType = report['type'] as String;
-          lat = (report['latitude'] as num).toDouble();
-          lng = (report['longitude'] as num).toDouble();
+          lat ??= (report['latitude'] as num).toDouble();
+          lng ??= (report['longitude'] as num).toDouble();
         }
       }
       if (lat != null && lng != null) {
@@ -53,11 +53,13 @@ class _EmergencySheetState extends State<EmergencySheet> {
             'geo/district?lat=$lat&lng=$lng',
           );
           final place = geo['district'] as Map<String, dynamic>;
-          final province = place['province'] as String;
-          if (['Lima', 'Callao', 'Trujillo'].contains(province)) {
-            district = place['name'] as String;
-            city = province == 'Trujillo' ? 'trujillo' : 'lima';
-          }
+          final province = (place['id'] as String).substring(0, 4);
+          district = place['name'] as String;
+          city = ['1501', '0701'].contains(province)
+              ? 'lima'
+              : province == '1301'
+              ? 'trujillo'
+              : province;
         } catch (_) {
           /* National contacts remain available outside coverage. */
         }

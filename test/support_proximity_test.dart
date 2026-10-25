@@ -24,18 +24,18 @@ void main() {
       await tester.pumpWidget(
         const MaterialApp(home: Scaffold(body: CoverageNotice(covered: false))),
       );
-      expect(find.text('Tu ciudad aún no tiene cobertura'), findsOneWidget);
+      expect(find.text('Ubicación fuera del directorio nacional'), findsOneWidget);
       await tester.pumpWidget(
         const MaterialApp(home: Scaffold(body: CoverageNotice(covered: true))),
       );
-      expect(find.text('Tu ciudad aún no tiene cobertura'), findsNothing);
+      expect(find.text('Ubicación fuera del directorio nacional'), findsNothing);
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(body: CoverageNotice(error: 'unavailable')),
         ),
       );
       expect(find.text('No pudimos comprobar la cobertura'), findsOneWidget);
-      expect(find.text('Tu ciudad aún no tiene cobertura'), findsNothing);
+      expect(find.text('Ubicación fuera del directorio nacional'), findsNothing);
     },
   );
   test('Health proximity uses real GPS, nearest first, within 500 meters', () {

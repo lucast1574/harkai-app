@@ -21,15 +21,14 @@ class CoverageNotice extends StatelessWidget {
                 children: [
                   Text(
                     covered == false
-                        ? 'Tu ciudad aún no tiene cobertura'
+                        ? 'Ubicación fuera del directorio nacional'
                         : 'No pudimos comprobar la cobertura',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     covered == false
-                        ? 'Estamos trabajando para llevar Harkai a todo el Perú. '
-                              'Por ahora el directorio de salud y ayuda cubre Lima, Callao y Trujillo.'
+                        ? 'El directorio de salud y ayuda está disponible en todo el Perú. Revisa tu ubicación para consultar lugares cercanos.'
                         : 'Actualiza la consulta para volver a intentarlo. Esto no significa que tu ciudad esté fuera de cobertura.',
                   ),
                 ],
