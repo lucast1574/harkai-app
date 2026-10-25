@@ -166,7 +166,7 @@ class _NotificationPermissionsState extends State<NotificationPermissions>
           ),
           const SizedBox(height: 12),
           const Text(
-            'Harkai usa tu ubicación precisa mientras te desplazas, incluso con la app minimizada o la pantalla bloqueada, para avisarte de riesgos, eventos y lugares cercanos. Android mostrará un aviso mientras se actualiza tu zona.',
+            'Harkai recopila tu ubicación precisa y la envía a sus servidores para avisarte de riesgos y eventos cercanos, y mostrarte promociones de negocios según tu cercanía. Esto funciona también en segundo plano, cuando no estás usando la app o tienes la pantalla bloqueada. Android mostrará un aviso mientras se actualiza tu zona. Puedes desactivar estos permisos en los ajustes del teléfono.',
             style: TextStyle(fontSize: 13, height: 1.45),
           ),
           const SizedBox(height: 10),
