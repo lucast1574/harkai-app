@@ -18,6 +18,7 @@ class MapGlassSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     const ink = Color(0xff031521);
+    const harkaiBlue = Color(0xff001935);
     final tint = accent == null
         ? ink
         : Color.alphaBlend(accent!.withValues(alpha: .19), ink);
@@ -33,10 +34,18 @@ class MapGlassSurface extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: dark && !neutral
+                colors: dark
                     ? [
-                        tint.withValues(alpha: accent == null ? 0.64 : 0.85),
-                        tint.withValues(alpha: accent == null ? 0.78 : 0.93),
+                        neutral
+                            ? harkaiBlue.withValues(alpha: .82)
+                            : tint.withValues(
+                                alpha: accent == null ? 0.64 : 0.85,
+                              ),
+                        neutral
+                            ? harkaiBlue.withValues(alpha: .72)
+                            : tint.withValues(
+                                alpha: accent == null ? 0.78 : 0.93,
+                              ),
                       ]
                     : [
                         Colors.white.withValues(alpha: neutral ? .72 : .90),
@@ -47,7 +56,7 @@ class MapGlassSurface extends StatelessWidget {
                 color:
                     accent?.withValues(alpha: dark ? 0.48 : 0.55) ??
                     (neutral
-                        ? Colors.white.withValues(alpha: .55)
+                        ? Colors.white.withValues(alpha: dark ? .12 : .55)
                         : dark
                         ? Colors.white.withValues(alpha: .09)
                         : Colors.black.withValues(alpha: .06)),

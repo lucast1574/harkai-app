@@ -20,7 +20,9 @@ class MapLocationHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const foreground = Color(0xff163044);
+    final foreground = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xffedf4f7)
+        : const Color(0xff163044);
     final resolved = district != null && district!.isNotEmpty;
     final locality = resolved
         ? [
