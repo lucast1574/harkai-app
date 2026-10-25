@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 class MapGlassSurface extends StatelessWidget {
   final Widget child;
   final double radius;
+  final bool neutral;
   final Color? accent;
   const MapGlassSurface({
     super.key,
     required this.child,
     this.radius = 24,
+    this.neutral = false,
     this.accent,
   });
   @override
@@ -31,20 +33,22 @@ class MapGlassSurface extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: dark
+                colors: dark && !neutral
                     ? [
                         tint.withValues(alpha: accent == null ? 0.64 : 0.85),
                         tint.withValues(alpha: accent == null ? 0.78 : 0.93),
                       ]
                     : [
-                        Colors.white.withValues(alpha: .90),
-                        Colors.white.withValues(alpha: .84),
+                        Colors.white.withValues(alpha: neutral ? .72 : .90),
+                        Colors.white.withValues(alpha: neutral ? .60 : .84),
                       ],
               ),
               border: Border.all(
                 color:
                     accent?.withValues(alpha: dark ? 0.48 : 0.55) ??
-                    (dark
+                    (neutral
+                        ? Colors.white.withValues(alpha: .55)
+                        : dark
                         ? Colors.white.withValues(alpha: .09)
                         : Colors.black.withValues(alpha: .06)),
               ),

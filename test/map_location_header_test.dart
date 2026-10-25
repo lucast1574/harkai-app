@@ -37,7 +37,7 @@ void main() {
             (image) =>
                 image.image is AssetImage &&
                 (image.image as AssetImage).assetName ==
-                    'assets/images/harkai_icon.png',
+                    'assets/images/logo.png',
           );
       expect(logo, hasLength(1));
       expect(find.text('Todas (1)'), findsOneWidget);
