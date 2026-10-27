@@ -5,13 +5,12 @@ import 'report_categories.dart';
 /// Reporting actions live here; map chips only filter existing reports.
 class MapReportSheet extends StatefulWidget {
   final ValueChanged<String> onReport;
-  final VoidCallback onEmergency, onHelp;
+  final VoidCallback onEmergency;
   final List<Widget> children;
   const MapReportSheet({
     super.key,
     required this.onReport,
     required this.onEmergency,
-    required this.onHelp,
     required this.children,
   });
 
@@ -35,7 +34,6 @@ class _MapReportSheetState extends State<MapReportSheet> {
     final colors = Theme.of(context).colorScheme;
     final onReport = widget.onReport;
     final onEmergency = widget.onEmergency;
-    final onHelp = widget.onHelp;
     final children = widget.children;
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -206,30 +204,23 @@ class _MapReportSheetState extends State<MapReportSheet> {
                           color: colors.onSurface.withValues(alpha: .08),
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextButton.icon(
-                                onPressed: onEmergency,
-                                icon: const Icon(
-                                  Icons.phone_in_talk_outlined,
-                                  size: 22,
-                                ),
-                                label: const Text('Emergencias'),
-                                style: TextButton.styleFrom(
-                                  minimumSize: const Size(0, 56),
-                                  foregroundColor: colors.onSurface,
-                                ),
-                              ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.tonalIcon(
+                            onPressed: onEmergency,
+                            icon: const Icon(
+                              Icons.phone_in_talk_outlined,
+                              size: 22,
                             ),
-                            SizedBox(
-                              height: 24,
-                              child: VerticalDivider(
-                                color: colors.outlineVariant,
+                            label: const Text('Llamadas de emergencia'),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 56),
+                              backgroundColor: colors.primary.withValues(
+                                alpha: .12,
                               ),
+                              foregroundColor: colors.onSurface,
                             ),
-                            Expanded(child: _HarkiHelpAction(onTap: onHelp)),
-                          ],
+                          ),
                         ),
                         const SizedBox(height: 12),
                         ...children,
@@ -394,70 +385,6 @@ class _CategoryIcon extends StatelessWidget {
             visual.color,
             Theme.of(context).colorScheme.onSurface,
             Theme.of(context).brightness == Brightness.dark ? 0.22 : 0,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HarkiHelpAction extends StatelessWidget {
-  final VoidCallback onTap;
-  const _HarkiHelpAction({required this.onTap});
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  'assets/images/bot.png',
-                  width: 32,
-                  height: 32,
-                  fit: BoxFit.cover,
-                  filterQuality: FilterQuality.none,
-                  excludeFromSemantics: true,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Harki',
-                      style: TextStyle(
-                        color: colors.onSurface,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Ayuda',
-                      style: TextStyle(
-                        color: colors.onSurfaceVariant,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 18,
-                color: colors.onSurfaceVariant,
-              ),
-            ],
           ),
         ),
       ),

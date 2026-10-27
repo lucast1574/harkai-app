@@ -8,7 +8,6 @@ abstract final class AppDestinations {
     (Icons.pets_outlined, 'Mascotas'),
     (Icons.location_on_outlined, 'Lugares de ayuda'),
     (Icons.storefront_outlined, 'Ponte en el mapa'),
-    (Icons.support_agent_rounded, 'Harki y ayuda'),
     (Icons.person_outline, 'Mi cuenta'),
   ];
 }

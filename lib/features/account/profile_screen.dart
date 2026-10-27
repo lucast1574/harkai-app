@@ -5,6 +5,7 @@ import '../../core/app_scope.dart';
 import '../../shared/widgets.dart';
 import '../../shared/account_avatar.dart';
 import 'appearance_picker.dart';
+import '../help/safety_report.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -164,6 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             trailing: const Icon(Icons.call_outlined, size: 20),
             onTap: () => launchUrl(Uri(scheme: 'tel', path: '1820')),
           ),
+          const SafetyReportButton(),
           if (error != null) MessageCard(error!, error: true),
           const SizedBox(height: 24),
           SizedBox(

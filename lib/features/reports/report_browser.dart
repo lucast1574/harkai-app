@@ -36,7 +36,6 @@ class ReportBrowser extends StatefulWidget {
   final bool history, alerts, showMap, homeMode;
   final VoidCallback? onOpenDrawer;
   final VoidCallback? onOpenProfile;
-  final VoidCallback? onOpenHelp;
   final ValueChanged<int>? onSelectSection;
   final Future<bool> Function({String? initialType, LatLng? initialPoint})?
   onCreateReport;
@@ -54,7 +53,6 @@ class ReportBrowser extends StatefulWidget {
     this.homeMode = false,
     this.onOpenDrawer,
     this.onOpenProfile,
-    this.onOpenHelp,
     this.onSelectSection,
     this.onCreateReport,
   });
@@ -579,7 +577,6 @@ class _ReportBrowserState extends State<ReportBrowser> {
               child: MapReportSheet(
                 onReport: (category) => triggerCreate(categoryId: category),
                 onEmergency: showEmergencyDialer,
-                onHelp: () => widget.onOpenHelp?.call(),
                 children: [
                   if (app.loading) const LinearProgressIndicator(minHeight: 2),
                   if (app.error != null)

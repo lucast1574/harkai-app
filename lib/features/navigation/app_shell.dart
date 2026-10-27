@@ -5,7 +5,6 @@ import '../../core/theme.dart';
 import '../../shared/widgets.dart';
 import '../account/profile_screen.dart';
 import '../auth/login_screen.dart';
-import '../help/help_screen.dart';
 import '../reports/quick_report_sheet.dart';
 import '../reports/report_categories.dart';
 import '../../core/models.dart';
@@ -75,7 +74,7 @@ class _AppShellState extends State<AppShell> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
             ),
-            for (final index in [2, 3, 5])
+            for (final index in [2, 3])
               ListTile(
                 leading: Icon(AppDestinations.entries[index].$1),
                 title: Text(AppDestinations.entries[index].$2),
@@ -130,7 +129,7 @@ class _AppShellState extends State<AppShell> {
     if (AppScope.of(context).account == null) {
       if (!await login()) return;
     }
-    if (mounted) selectSection(6);
+    if (mounted) selectSection(5);
   }
 
   Widget page() => switch (section) {
@@ -152,8 +151,7 @@ class _AppShellState extends State<AppShell> {
       onMapTarget: showOnMap,
     ),
     4 => BusinessDirectory(onMap: showOnMap),
-    5 => const HelpScreen(),
-    6 => const ProfileScreen(),
+    5 => const ProfileScreen(),
     _ => homeMap(),
   };
 
@@ -163,7 +161,6 @@ class _AppShellState extends State<AppShell> {
     homeMode: true,
     onOpenDrawer: openDestinations,
     onOpenProfile: openProfileOrLogin,
-    onOpenHelp: () => selectSection(5),
     onSelectSection: selectSection,
     onCreateReport: create,
   );
@@ -259,7 +256,7 @@ class _AppShellState extends State<AppShell> {
         body: isHomeMap
             ? KeyedSubtree(key: const ValueKey('home-map'), child: homeMap())
             : SafeArea(
-                child: account == null && [6].contains(section)
+                child: account == null && [5].contains(section)
                     ? Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
@@ -286,7 +283,7 @@ class _AppShellState extends State<AppShell> {
         bottomNavigationBar: NavigationBar(
           selectedIndex: switch (section) {
             0 => 0,
-            6 => 0,
+            5 => 0,
             4 => 2,
             _ => 1,
           },
