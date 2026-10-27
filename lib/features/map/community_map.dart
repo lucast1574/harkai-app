@@ -6,6 +6,7 @@ import '../../core/models.dart';
 import '../../core/theme.dart';
 import '../help/support_place.dart';
 import 'user_location_marker.dart';
+import 'map_base_tiles.dart';
 import '../business/business_point.dart';
 
 class CommunityMap extends StatefulWidget {
@@ -144,13 +145,7 @@ class _CommunityMapState extends State<CommunityMap> {
             : (_, point) => widget.onLongPressPoint!(point),
       ),
       children: [
-        TileLayer(
-          urlTemplate: const String.fromEnvironment(
-            'HARKAI_TILE_URL',
-            defaultValue: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          ),
-          userAgentPackageName: 'com.lucast.harkai',
-        ),
+        MapBaseTiles(dark: Theme.of(context).brightness == Brightness.dark),
         if (widget.incidents.isNotEmpty)
           CircleLayer(
             circles: widget.incidents.map((i) {
