@@ -240,22 +240,20 @@ class _NotificationPermissionsState extends State<NotificationPermissions>
                 false,
                 'locationSettings',
               ),
-            if (!widget.sheet) ...[
-              setting(
-                Icons.photo_camera_outlined,
-                'Cámara',
-                'Se solicita al tomar la foto de un reporte',
-                p.camera,
-                'appSettings',
-              ),
-              setting(
-                Icons.mic_none_rounded,
-                'Micrófono',
-                'Se solicita al describir un reporte con tu voz',
-                p.microphone,
-                'appSettings',
-              ),
-            ],
+            setting(
+              Icons.photo_camera_outlined,
+              'Cámara',
+              'Se solicita al tomar la foto de un reporte',
+              p.camera,
+              'appSettings',
+            ),
+            setting(
+              Icons.mic_none_rounded,
+              'Micrófono',
+              'Se solicita al describir un reporte con tu voz',
+              p.microphone,
+              'appSettings',
+            ),
             setting(
               Icons.battery_saver_outlined,
               'Uso de batería en segundo plano',
