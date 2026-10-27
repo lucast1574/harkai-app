@@ -1,0 +1,10 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="600" android:viewportHeight="720">
+    <!-- Android tints the alpha mask: keep the Harkai shield white and transparent. -->
+    <group android:translateX="-240" android:translateY="-180">
+        <path android:fillColor="#FFFFFFFF" android:pathData="M286,320 L539,220 L793,320 L793,439 L744,439 L744,352 L539,273 L333,352 L333,439 L286,439 Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M409,364 L463,345 L463,501 L615,501 L615,345 L669,364 L669,501 L793,501 L793,552 L669,552 L669,657 Q648,695 615,721 L615,552 L463,552 L463,721 Q430,695 409,657 L409,552 L286,552 L286,501 L409,501 Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M509,326 L539,314 L569,326 L569,440 L509,440 Z M302,632 L345,606 Q389,732 509,791 L509,603 L570,603 L570,791 Q690,732 732,606 L776,632 Q713,788 539,857 Q365,788 302,632 Z" />
+    </group>
+</vector>

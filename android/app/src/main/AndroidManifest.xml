@@ -19,6 +19,7 @@
         <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />
         <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="harkai_reports" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/harkai_notification_color" />
         <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notifications" />
     </application>
     <queries><intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent><intent><action android:name="android.intent.action.VIEW" /><data android:scheme="tel" /></intent><intent><action android:name="android.intent.action.VIEW" /><data android:scheme="mailto" /></intent></queries>

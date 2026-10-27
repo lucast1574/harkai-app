@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../../core/theme.dart';
 
 class NotificationDisplay {
   final plugin = FlutterLocalNotificationsPlugin();
@@ -38,6 +39,7 @@ class NotificationDisplay {
           'harkai_reports',
           'Reportes de tu zona',
           icon: 'ic_notifications',
+          color: green,
           importance: Importance.high,
           priority: Priority.high,
         ),
@@ -59,6 +61,7 @@ class NotificationDisplay {
           channelDescription:
               'Puntos permanentes de salud cerca de tu ubicación',
           icon: 'ic_notifications',
+          color: green,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),
@@ -79,6 +82,7 @@ class NotificationDisplay {
           'Negocios cercanos',
           channelDescription: 'Avisos de puntos promocionados cercanos',
           icon: 'ic_notifications',
+          color: green,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),
@@ -103,6 +107,7 @@ class NotificationDisplay {
           business ? 'harkai_businesses' : 'harkai_reports',
           business ? 'Negocios cercanos' : 'Reportes de tu zona',
           icon: 'ic_notifications',
+          color: green,
           importance: business ? Importance.defaultImportance : Importance.high,
           priority: business ? Priority.defaultPriority : Priority.high,
           onlyAlertOnce: false,
