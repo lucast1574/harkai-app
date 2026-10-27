@@ -359,12 +359,12 @@ class _CommunityMapState extends State<CommunityMap> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.82),
+                color: navy.withValues(alpha: 0.72),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Text(
                 '© OpenStreetMap',
-                style: TextStyle(fontSize: 10, color: Colors.black87),
+                style: TextStyle(fontSize: 10, color: Color(0xffe3eaf0)),
               ),
             ),
           ),
