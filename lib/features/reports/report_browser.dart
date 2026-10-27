@@ -557,6 +557,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
         ),
         if (selectedTarget != null)
           MapTargetSheet(
+            userPosition: userPosition,
             key: ValueKey(selectedTarget!.id),
             target: selectedTarget!,
             onClose: () {
@@ -705,6 +706,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
             ...items.map(
               (i) => ReportTile(
                 incident: i,
+                userPosition: userPosition,
                 onTap: () => widget.onMapTarget != null
                     ? widget.onMapTarget!(MapTarget.report(i))
                     : open(i),

@@ -209,7 +209,7 @@ class _CommunityMapState extends State<CommunityMap> {
               (p) => Marker(
                 point: LatLng(p.latitude, p.longitude),
                 width: 72,
-                height: 72,
+                height: 84,
                 child: GestureDetector(
                   onTap: () => widget.onBusiness?.call(p),
                   child: Tooltip(
@@ -218,12 +218,26 @@ class _CommunityMapState extends State<CommunityMap> {
                       decoration: BoxDecoration(
                         color: navy,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: green, width: 3),
+                        border: Border.all(color: promotionAmber, width: 2),
                       ),
-                      child: const Icon(
-                        Icons.storefront_rounded,
-                        color: green,
-                        size: 34,
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.storefront_rounded,
+                            color: promotionAmber,
+                            size: 28,
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'PROMO',
+                            style: TextStyle(
+                              color: promotionAmber,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

@@ -3,14 +3,17 @@ import '../reports/report_detail.dart';
 import '../business/business_point.dart';
 import '../help/support_place.dart';
 import 'map_target.dart';
+import 'package:latlong2/latlong.dart';
 
 /// A single scroll controller connects expansion with the full point content.
 class MapTargetSheet extends StatelessWidget {
   final MapTarget target;
+  final LatLng? userPosition;
   final VoidCallback onClose;
   const MapTargetSheet({
     super.key,
     required this.target,
+    this.userPosition,
     required this.onClose,
   });
   @override
@@ -77,6 +80,7 @@ class MapTargetSheet extends StatelessWidget {
             ? ReportDetail(
                 key: ValueKey(target.id),
                 id: target.id,
+                userPosition: userPosition,
                 initialIncident: target.incident,
                 embedded: true,
                 scrollController: controller,

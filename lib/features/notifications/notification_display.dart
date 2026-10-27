@@ -31,15 +31,18 @@ class NotificationDisplay {
 
   Future<bool> show(String id) async {
     await plugin.show(
-      int.parse(id.substring(0, 7), radix: 16),
+      0,
       'Un reporte cerca de tu zona',
       'Información de la comunidad. Revisa su estado y recomendaciones.',
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'harkai_reports',
           'Reportes de tu zona',
           icon: 'ic_notifications',
           color: green,
+          tag: 'incident:$id',
+          groupKey: 'harkai_reports',
+          onlyAlertOnce: true,
           importance: Importance.high,
           priority: Priority.high,
         ),
@@ -73,14 +76,17 @@ class NotificationDisplay {
 
   Future<bool> showBusiness(String id, String name) async {
     await plugin.show(
-      1000000000 + int.parse(id.substring(0, 7), radix: 16),
-      'Un negocio cerca de ti',
+      0,
+      'Promocionado: un negocio cerca de ti',
       '$name · Promocionado. Descúbrelo en Harkai.',
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'harkai_businesses',
           'Negocios cercanos',
           channelDescription: 'Avisos de puntos promocionados cercanos',
+          tag: 'business:$id',
+          groupKey: 'harkai_businesses',
+          onlyAlertOnce: true,
           icon: 'ic_notifications',
           color: green,
           importance: Importance.defaultImportance,
@@ -92,11 +98,15 @@ class NotificationDisplay {
     return true;
   }
 
-  Future<bool> showProximity(String id, Map<String, dynamic> notice) async {
+  Future<bool> showProximity(
+    String id,
+    Map<String, dynamic> notice, {
+    bool alertAgain = false,
+  }) async {
     final business = notice['kind'] != 'incident';
     final stage = (notice['stage'] as num?)?.toInt() ?? 500;
     await plugin.show(
-      (business ? 1000000000 : 0) + int.parse(id.substring(0, 7), radix: 16),
+      0,
       notice['title'] as String? ??
           (business ? 'Un negocio cerca de ti' : 'Un reporte cerca de ti'),
       notice['body'] as String? ??
@@ -110,7 +120,9 @@ class NotificationDisplay {
           color: green,
           importance: business ? Importance.defaultImportance : Importance.high,
           priority: business ? Priority.defaultPriority : Priority.high,
-          onlyAlertOnce: false,
+          tag: '${business ? 'business' : 'incident'}:$id',
+          groupKey: business ? 'harkai_businesses' : 'harkai_reports',
+          onlyAlertOnce: !alertAgain,
         ),
       ),
       payload: business ? 'business:$id' : id,

@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/api_client.dart';
 import 'notification_display.dart';
 import 'alert_location.dart';
+import 'proximity_sound.dart';
 
 class NotificationService {
   static const storageKey = 'harkai_push_subscription_v1';
@@ -35,7 +36,37 @@ class NotificationService {
             !validReportID(point)) {
           continue;
         }
-        await display.showProximity(point!, n);
+        final saved = subscription!;
+        final seen = Map<String, dynamic>.from(
+          saved['notice_stages'] as Map? ?? {},
+        );
+        final key = '${n['kind']}:$point';
+        final previous = seen[key] as Map?;
+        final date = DateTime.tryParse(previous?['at'] as String? ?? '');
+        final fresh =
+            date != null &&
+            DateTime.now().difference(date) < const Duration(hours: 24);
+        final stage = (n['stage'] as num?)?.toInt() ?? 500;
+        await display.showProximity(
+          point!,
+          n,
+          alertAgain: proximityInterrupts(
+            fresh ? (previous?['stage'] as num?)?.toInt() : null,
+            stage,
+            promoted: n['kind'] != 'incident',
+          ),
+        );
+        if (owner != currentUser() || version != generation || !enabled) return;
+        final previousStage = (previous?['stage'] as num?)?.toInt() ?? 500;
+        seen[key] = {
+          'stage': fresh && previousStage < stage ? previousStage : stage,
+          'at': DateTime.now().toIso8601String(),
+        };
+        while (seen.length > 200) {
+          seen.remove(seen.keys.first);
+        }
+        saved['notice_stages'] = seen;
+        await api.storage.write(key: storageKey, value: jsonEncode(saved));
         if (owner != currentUser() || version != generation || !enabled) return;
         await api.request(
           "POST",

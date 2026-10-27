@@ -43,7 +43,10 @@ class BusinessDetails extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Promocionado'),
+          const Chip(
+            label: Text('Espacio promocionado · No es una alerta'),
+            avatar: Icon(Icons.storefront_outlined, size: 18),
+          ),
           Text(point.name, style: Theme.of(context).textTheme.headlineSmall),
           Text(
             [

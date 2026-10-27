@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/models.dart';
+import 'package:latlong2/latlong.dart';
 import '../../core/app_scope.dart';
 import '../../core/theme.dart';
 import '../../shared/widgets.dart';
@@ -16,8 +17,14 @@ String _relativeTime(DateTime date) {
 
 class ReportTile extends StatelessWidget {
   final Incident incident;
+  final LatLng? userPosition;
   final VoidCallback onTap;
-  const ReportTile({super.key, required this.incident, required this.onTap});
+  const ReportTile({
+    super.key,
+    required this.incident,
+    required this.onTap,
+    this.userPosition,
+  });
   @override
   Widget build(BuildContext context) {
     final visual = categoryVisual(incident.type);
@@ -137,9 +144,22 @@ class ReportTile extends StatelessWidget {
                 ).textTheme.bodyMedium?.copyWith(height: 1.4),
               ),
               const SizedBox(height: 12),
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   VerificationBadge(incident.verified),
+                  if (incident.confirmations > 0)
+                    Text(
+                      '${incident.confirmations} ${incident.confirmations == 1 ? 'confirmación' : 'confirmaciones'}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  if (userPosition != null)
+                    Text(
+                      'Aprox. ${(const Distance()(userPosition!, LatLng(incident.latitude, incident.longitude)) / 1000).toStringAsFixed(1)} km',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   if (incident.mediaId != null) ...[
                     const SizedBox(width: 8),
                     Container(

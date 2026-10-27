@@ -65,7 +65,9 @@ class Category {
 class Incident {
   final String id, type, description, status;
   final double latitude, longitude;
-  final bool verified, viewerIsAuthor;
+  final bool verified, viewerIsAuthor, viewerHasConfirmed;
+  final int confirmations;
+  final DateTime? observedAt;
   final DateTime createdAt;
   final DateTime? expiresAt;
   final String? mediaId, contact, district, city;
@@ -78,6 +80,9 @@ class Incident {
     required this.longitude,
     required this.verified,
     this.viewerIsAuthor = false,
+    this.viewerHasConfirmed = false,
+    this.confirmations = 0,
+    this.observedAt,
     required this.createdAt,
     this.expiresAt,
     this.mediaId,
@@ -94,6 +99,11 @@ class Incident {
     longitude: (json['longitude'] as num).toDouble(),
     verified: json['verified'] as bool,
     viewerIsAuthor: json['viewer_is_author'] == true,
+    viewerHasConfirmed: json['viewer_has_confirmed'] == true,
+    confirmations:
+        (json['confirmations'] as num?)?.toInt() ??
+        (json['verified'] == true ? 1 : 0),
+    observedAt: DateTime.tryParse(json['observed_at'] as String? ?? ''),
     createdAt: DateTime.parse(json['created_at'] as String),
     expiresAt: json['expires_at'] == null
         ? null
@@ -103,10 +113,12 @@ class Incident {
     district: json['district'] as String?,
     city: json['city'] as String?,
   );
-  bool get canConfirm =>
-      !verified &&
+  bool get mapActive =>
       status == 'active' &&
+      !createdAt.isAfter(DateTime.now()) &&
+      DateTime.now().difference(createdAt) < const Duration(minutes: 90) &&
       (expiresAt == null || expiresAt!.isAfter(DateTime.now()));
+  bool get canConfirm => !viewerHasConfirmed && mapActive;
   String get verificationLabel =>
       verified ? 'Confirmado por la comunidad' : 'No verificado';
 }

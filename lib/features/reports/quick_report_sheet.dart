@@ -8,6 +8,8 @@ import 'report_photo.dart';
 import 'report_repository.dart';
 import 'voice_input.dart';
 import 'report_input_action.dart';
+import '../../shared/app_choice_field.dart';
+import 'report_categories.dart';
 
 class QuickReportSheet extends StatefulWidget {
   final String category;
@@ -20,10 +22,10 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
   final text = TextEditingController(), contact = TextEditingController();
   final form = GlobalKey<FormState>();
   Position? position;
-  String? mediaId, photoName, error;
+  String? mediaId, photoName, error, manualType;
   bool busy = false, locating = true, share = false, voiceBusy = false;
   bool photoBusy = false;
-  bool get pet => widget.category == 'pet';
+  bool get pet => (manualType ?? widget.category) == 'pet';
 
   @override
   void initState() {
@@ -104,16 +106,29 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
       // Always refresh the GPS before publication; never use a map exploration point.
       if (!await locate() || !mounted) return false;
       final description = text.text.trim();
-      final analysis = await ReportRepository(
-        app.api,
-      ).analyze(description, type: widget.category);
+      final analysis = manualType == null
+          ? await ReportRepository(
+              app.api,
+            ).analyze(description, type: widget.category)
+          : null;
       if (!mounted || app.account?.id != owner) return false;
-      if (analysis.suggestedType == null || analysis.suggestedType!.isEmpty) {
-        setState(() => error = analysis.reason);
+      if (manualType == null &&
+          (analysis?.suggestedType == null ||
+              analysis!.suggestedType!.isEmpty)) {
+        setState(
+          () => error =
+              'No pude identificar el tipo. Elígelo abajo; tu descripción se conserva.',
+        );
         return false;
       }
       final report = await ReportRepository(app.api).create({
-        'category': widget.category,
+        'category': manualType == null
+            ? widget.category
+            : crimeTypes.contains(manualType)
+            ? 'crime'
+            : manualType,
+        if (manualType != null) 'type': manualType,
+        if (manualType != null) 'manual_type': true,
         'description': description,
         'latitude': position!.latitude,
         'longitude': position!.longitude,
@@ -135,7 +150,7 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final visual = categoryVisual(widget.category);
+    final visual = categoryVisual(manualType ?? widget.category);
     return PopScope(
       canPop: !busy && !voiceBusy,
       child: SafeArea(
@@ -200,6 +215,28 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
                           (value?.trim().runes.length ?? 0) < 5
                           ? 'Describe brevemente lo ocurrido.'
                           : null,
+                    ),
+                    const SizedBox(height: 12),
+                    AppChoiceField(
+                      label: 'Tipo de alerta',
+                      value: manualType ?? '',
+                      options: {
+                        '': 'Identificar por mi descripción',
+                        for (final type in [
+                          ...crimeTypes,
+                          'fire',
+                          'emergency',
+                          'crash',
+                          'pet',
+                        ])
+                          type: AppScope.of(context).categoryLabel(type),
+                      },
+                      onChanged: busy || voiceBusy
+                          ? null
+                          : (value) => setState(() {
+                              manualType = value.isEmpty ? null : value;
+                              error = null;
+                            }),
                     ),
                     if (AppScope.of(context).capabilities['audio'] == true)
                       VoiceInput(

@@ -9,9 +9,11 @@ import '../auth/login_screen.dart';
 import '../community/report_comments.dart';
 import '../help/safety_report.dart';
 import 'report_repository.dart';
+import 'package:latlong2/latlong.dart';
 
 class ReportDetail extends StatefulWidget {
   final String id;
+  final LatLng? userPosition;
   final bool own;
   final bool embedded;
   final ScrollController? scrollController;
@@ -21,6 +23,7 @@ class ReportDetail extends StatefulWidget {
   const ReportDetail({
     super.key,
     required this.id,
+    this.userPosition,
     this.own = false,
     this.embedded = false,
     this.scrollController,
@@ -109,16 +112,23 @@ class _ReportDetailState extends State<ReportDetail> {
     ),
   );
 
-  Future<bool> resolve() async {
+  Future<bool> resolve([String status = 'resolved']) async {
+    if (busy) return false;
+    setState(() {
+      busy = true;
+      error = null;
+    });
     try {
       await ReportRepository(
         AppScope.of(context).api,
-      ).status(widget.id, 'resolved');
+      ).status(widget.id, status);
       await load();
       return true;
     } catch (e) {
       if (mounted) setState(() => error = e.toString());
       return false;
+    } finally {
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -180,12 +190,23 @@ class _ReportDetailState extends State<ReportDetail> {
                         ),
                       ],
                     ),
+                    if (widget.userPosition != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        'Aprox. ${(const Distance()(widget.userPosition!, LatLng(i.latitude, i.longitude)) / 1000).toStringAsFixed(1)} km de ti',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
                         VerificationBadge(i.verified),
+                        if (i.confirmations > 0)
+                          Text(
+                            '${i.confirmations} ${i.confirmations == 1 ? 'vecino confirmó' : 'vecinos confirmaron'}',
+                          ),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -198,7 +219,7 @@ class _ReportDetailState extends State<ReportDetail> {
                           child: Text(
                             'Estado: ${i.status == 'resolved'
                                 ? 'Resuelto'
-                                : i.canConfirm || i.verified
+                                : i.mapActive
                                 ? 'Activo'
                                 : 'Inactivo'}',
                             style: const TextStyle(
@@ -219,7 +240,19 @@ class _ReportDetailState extends State<ReportDetail> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      'Publicado: ${i.createdAt.toLocal().toString().substring(0, 16)}',
+                      'Publicado: ${i.createdAt.toLocal().toString().substring(0, 16)} · En el mapa hasta 90 min',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    if (i.observedAt != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'El autor indicó que seguía ocurriendo: ${i.observedAt!.toLocal().toString().substring(0, 16)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'La confirmación es vecinal. Al salir del mapa, la publicación y sus comentarios se conservan.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     if (i.contact != null && i.contact!.trim().isNotEmpty) ...[
@@ -328,12 +361,18 @@ class _ReportDetailState extends State<ReportDetail> {
                 ],
               ],
             ),
-            if ((widget.own || i.viewerIsAuthor) && i.status == 'active') ...[
+            if ((widget.own || i.viewerIsAuthor) && i.mapActive) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: busy ? null : () => resolve('active'),
+                icon: const Icon(Icons.update_rounded),
+                label: const Text('Sigue ocurriendo'),
+              ),
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: busy ? null : resolve,
+                  onPressed: busy ? null : () => resolve(),
                   icon: const Icon(Icons.check_circle_outline, size: 18),
                   label: const Text('Marcar mi reporte como resuelto'),
                 ),

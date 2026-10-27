@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 const navy = Color(0xff011935);
 const deepNavy = Color(0xff001f3f);
 const green = Color(0xff57d463);
+const promotionAmber = Color(0xffe6b86a);
 
 class CategoryVisual {
   final String id, shortLabel, callLabel, emergencyPhone;
