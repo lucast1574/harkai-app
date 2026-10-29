@@ -28,7 +28,7 @@ class CoverageNotice extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     covered == false
-                        ? 'El directorio de salud y ayuda está disponible en todo el Perú. Revisa tu ubicación para consultar lugares cercanos.'
+                        ? 'El directorio de salud, policía y bomberos está disponible en todo el Perú. Revisa tu ubicación para consultar lugares cercanos.'
                         : 'Actualiza la consulta para volver a intentarlo. Esto no significa que tu ciudad esté fuera de cobertura.',
                   ),
                 ],

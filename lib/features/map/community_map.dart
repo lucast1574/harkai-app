@@ -269,7 +269,7 @@ class _CommunityMapState extends State<CommunityMap> {
                         width: 15,
                         height: 15,
                         decoration: BoxDecoration(
-                          color: const Color(0xffd94750),
+                          color: p.markerColor,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 1.4),
                           boxShadow: const [
@@ -280,11 +280,7 @@ class _CommunityMapState extends State<CommunityMap> {
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.add_rounded,
-                          color: Colors.white,
-                          size: 10,
-                        ),
+                        child: Icon(p.kindIcon, color: Colors.white, size: 10),
                       ),
                     ),
                   ),

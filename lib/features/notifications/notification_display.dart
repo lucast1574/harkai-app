@@ -55,14 +55,14 @@ class NotificationDisplay {
   Future<bool> showSupport(String name, int meters, String payload) async {
     await plugin.show(
       2000000001,
-      'Un lugar de salud cerca de ti',
+      'Un lugar de ayuda cerca de ti',
       '$name · aprox. $meters m. Punto permanente de ayuda, no una alerta.',
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'harkai_support',
-          'Lugares de salud cercanos',
+          'Lugares de ayuda cercanos',
           channelDescription:
-              'Puntos permanentes de salud cerca de tu ubicación',
+              'Puntos permanentes de salud, policía y bomberos cerca de tu ubicación',
           icon: 'ic_notifications',
           color: green,
           importance: Importance.defaultImportance,

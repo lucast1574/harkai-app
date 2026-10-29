@@ -5,6 +5,40 @@ import 'package:harkai/features/map/map_target.dart';
 import 'package:harkai/features/map/map_target_sheet.dart';
 
 void main() {
+  for (final entry in {
+    'police': ('Comisaría', Icons.local_police_rounded),
+    'fire_station': (
+      'Estación de bomberos',
+      Icons.local_fire_department_rounded,
+    ),
+  }.entries) {
+    testWidgets('${entry.key} sheet identifies the emergency service', (
+      tester,
+    ) async {
+      final place = SupportPlace.fromJson({
+        'id': entry.key,
+        'name': 'Sede de prueba',
+        'kind': entry.key,
+        'address': 'Dirección no publicada',
+        'district': 'Lima',
+        'source_url': '',
+        'location_source_url': '',
+        'reviewed_at': '2026-10-29',
+        'latitude': -12,
+        'longitude': -77,
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: SupportPlaceDetails(place: place)),
+        ),
+      );
+      expect(find.text(entry.value.$1), findsOneWidget);
+      expect(find.byIcon(entry.value.$2), findsOneWidget);
+      expect(find.text('Centro de salud'), findsNothing);
+      expect(find.text('Teléfono no disponible'), findsOneWidget);
+      expect(find.byType(FilledButton), findsNothing);
+    });
+  }
   testWidgets(
     'Health sheet has one identity, address, call action and close control',
     (tester) async {

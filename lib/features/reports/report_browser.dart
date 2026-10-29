@@ -253,7 +253,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
       if (mounted && version == supportGeneration) {
         setState(
           () => supportError =
-              'No se pudo cargar el directorio de salud. Las alertas siguen disponibles.',
+              'No se pudo cargar el directorio de ayuda. Las alertas siguen disponibles.',
         );
       }
     }
@@ -673,7 +673,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
           if (isPlacesDirectory && supportPlaces.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
-              'Centros de salud permanentes (${supportPlaces.length})',
+              'Salud, policía y bomberos (${supportPlaces.length})',
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),

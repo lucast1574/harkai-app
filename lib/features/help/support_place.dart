@@ -65,6 +65,25 @@ class SupportPlace {
     photoUrls: List<String>.from(data['photo_urls'] as List? ?? const []),
   );
 
+  String get kindLabel => switch (kind) {
+    'police' => 'Comisaría',
+    'fire_station' => 'Estación de bomberos',
+    'hospital' => 'Hospital o clínica',
+    'health_center' => 'Centro de salud',
+    _ => 'Lugar de apoyo',
+  };
+  IconData get kindIcon => switch (kind) {
+    'police' => Icons.local_police_rounded,
+    'fire_station' => Icons.local_fire_department_rounded,
+    'support' => Icons.support_rounded,
+    _ => Icons.add_rounded,
+  };
+  Color get markerColor => switch (kind) {
+    'police' => const Color(0xff2563a6),
+    'fire_station' => const Color(0xffb95016),
+    _ => const Color(0xffd94750),
+  };
+
   List<String> get contactPhones => {
     if (phone != null && phone!.isNotEmpty) phone!,
     ...phones,
@@ -113,16 +132,10 @@ class SupportPlaceDetails extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              Icon(
-                Icons.local_hospital_outlined,
-                size: 15,
-                color: colors.primary,
-              ),
+              Icon(place.kindIcon, size: 15, color: colors.primary),
               const SizedBox(width: 6),
               Text(
-                place.kind == 'hospital'
-                    ? 'Hospital o clínica'
-                    : 'Centro de salud',
+                place.kindLabel,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,

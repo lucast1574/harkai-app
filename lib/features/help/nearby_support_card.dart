@@ -12,11 +12,11 @@ class NearbySupportCard extends StatelessWidget {
     final first = nearby.first;
     return Card(
       child: ListTile(
-        leading: const CircleAvatar(
-          backgroundColor: Color(0xffd94750),
-          child: Icon(Icons.add, color: Colors.white),
+        leading: CircleAvatar(
+          backgroundColor: first.place.markerColor,
+          child: Icon(first.place.kindIcon, color: Colors.white),
         ),
-        title: const Text('Tienes un lugar de salud cerca'),
+        title: Text('${first.place.kindLabel} cerca de ti'),
         subtitle: Text(
           '${first.place.name} · aprox. ${first.meters.round()} m\n'
           '${nearby.length} ${nearby.length == 1 ? 'lugar a menos' : 'lugares a menos'} de 500 m. '
