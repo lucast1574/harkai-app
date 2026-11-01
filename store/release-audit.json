@@ -21,7 +21,14 @@
     "sourceCommit": "5e185bb11ab5e7e3ca16c34e17257a3d8b7446c2",
     "githubRun": "https://github.com/lucast1574/harkai-app/actions/runs/41286849691",
     "firebaseConfiguration": "private GitHub Actions secret; restricted iOS client key",
-    "apnsConfiguration": "PENDING_USER_CONFIRMATION",
+    "apnsConfiguration": {
+      "development": "CONFIGURED",
+      "production": "CONFIGURED",
+      "developmentKeyId": "K7Y47HFPL6",
+      "productionKeyId": "9G334XN7ND",
+      "scope": "com.lucast.harkai only",
+      "encryptedBackupsOutsideRepository": true
+    },
     "signed": true,
     "uploaded": true,
     "physicalIphoneGoogleLoginAndPushTest": "PENDING",
@@ -45,7 +52,7 @@
     "auxiliaryAssetCheck": "Linux CAR checker does not support one native actool encoding; official Apple upload validation COMPLETE without errors or warnings",
     "internalBuildState": "READY_FOR_BETA_TESTING",
     "appStoreDraftBuildAttached": true,
-    "appStoreReviewSubmission": "PENDING: APNs setup and completion of store review materials"
+    "appStoreReviewSubmission": "PENDING: completion of store review materials"
   },
   "security": {
     "githubAlert": 1,
