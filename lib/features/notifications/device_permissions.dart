@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:geolocator/geolocator.dart';
@@ -26,6 +27,21 @@ class DevicePermissions {
     if (Firebase.apps.isEmpty) await Firebase.initializeApp();
     final notification = await FirebaseMessaging.instance
         .getNotificationSettings();
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final permission = await Geolocator.checkPermission();
+      return DevicePermissions(
+        notifications:
+            notification.authorizationStatus ==
+                AuthorizationStatus.authorized ||
+            notification.authorizationStatus == AuthorizationStatus.provisional,
+        gps: await Geolocator.isLocationServiceEnabled(),
+        precise:
+            await Geolocator.getLocationAccuracy() ==
+            LocationAccuracyStatus.precise,
+        background: permission == LocationPermission.always,
+        batteryUnrestricted: true,
+      );
+    }
     final native =
         await channel.invokeMapMethod<String, dynamic>('status') ?? {};
     return DevicePermissions(
@@ -42,6 +58,14 @@ class DevicePermissions {
   }
 
   static Future<void> open(String destination) async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      if (destination == 'location') {
+        await Geolocator.requestPermission();
+      } else {
+        await Geolocator.openAppSettings();
+      }
+      return;
+    }
     await channel.invokeMethod<bool>(destination);
   }
 }

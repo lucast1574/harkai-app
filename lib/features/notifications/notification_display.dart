@@ -7,6 +7,11 @@ class NotificationDisplay {
     await plugin.initialize(
       const InitializationSettings(
         android: AndroidInitializationSettings('ic_notifications'),
+        iOS: DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        ),
       ),
       onDidReceiveNotificationResponse: (response) => open(response.payload),
     );
@@ -35,6 +40,7 @@ class NotificationDisplay {
       'Un reporte cerca de tu zona',
       'Información de la comunidad. Revisa su estado y recomendaciones.',
       NotificationDetails(
+        iOS: DarwinNotificationDetails(),
         android: AndroidNotificationDetails(
           'harkai_reports',
           'Reportes de tu zona',
@@ -58,6 +64,7 @@ class NotificationDisplay {
       'Un lugar de ayuda cerca de ti',
       '$name · aprox. $meters m. Punto permanente de ayuda, no una alerta.',
       const NotificationDetails(
+        iOS: DarwinNotificationDetails(),
         android: AndroidNotificationDetails(
           'harkai_support',
           'Lugares de ayuda cercanos',
@@ -80,6 +87,7 @@ class NotificationDisplay {
       'Promocionado: un negocio cerca de ti',
       '$name · Promocionado. Descúbrelo en Harkai.',
       NotificationDetails(
+        iOS: DarwinNotificationDetails(),
         android: AndroidNotificationDetails(
           'harkai_businesses',
           'Negocios cercanos',
@@ -113,6 +121,7 @@ class NotificationDisplay {
           notice['name'] as String? ??
           'Revisa el punto en Harkai.',
       NotificationDetails(
+        iOS: DarwinNotificationDetails(),
         android: AndroidNotificationDetails(
           business ? 'harkai_businesses' : 'harkai_reports',
           business ? 'Negocios cercanos' : 'Reportes de tu zona',

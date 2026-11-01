@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../core/api_client.dart';
@@ -105,7 +106,7 @@ class NotificationService {
           settings.authorizationStatus != AuthorizationStatus.provisional) {
         return false;
       }
-      final token = await FirebaseMessaging.instance.getToken();
+      final token = await messagingToken();
       if (token != null) await register(token);
       if (enabled && saved['live_location'] == true) await tracking.start();
       return enabled;
@@ -174,13 +175,28 @@ class NotificationService {
         'Concede el permiso de notificaciones en el dispositivo.',
       );
     }
-    final token = await FirebaseMessaging.instance.getToken();
+    final token = await messagingToken();
     if (token == null || owner != currentUser()) {
       throw Exception('No se pudo registrar el dispositivo.');
     }
     final registered = await register(token);
     if (registered) await tracking.start();
     return registered;
+  }
+
+  Future<String?> messagingToken() async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      for (var attempt = 0; attempt < 10; attempt++) {
+        if (await FirebaseMessaging.instance.getAPNSToken() != null) {
+          return FirebaseMessaging.instance.getToken();
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+      }
+      throw Exception(
+        'Apple aún no registró las notificaciones. Inténtalo nuevamente.',
+      );
+    }
+    return FirebaseMessaging.instance.getToken();
   }
 
   Future<bool> register(String token) async {
@@ -192,7 +208,9 @@ class NotificationService {
       'me/devices',
       body: {
         'token': token,
-        'platform': 'android',
+        'platform': defaultTargetPlatform == TargetPlatform.iOS
+            ? 'ios'
+            : 'android',
         'latitude': saved['latitude'],
         'longitude': saved['longitude'],
       },

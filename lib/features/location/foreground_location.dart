@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'location_service.dart';
 import 'location_stream.dart';
@@ -61,11 +62,17 @@ class ForegroundLocation with WidgetsBindingObserver {
       if (track) {
         updates = sharedLocationSource
             .watch(
-              AndroidSettings(
-                accuracy: LocationAccuracy.high,
-                distanceFilter: 5,
-                intervalDuration: const Duration(seconds: 5),
-              ),
+              defaultTargetPlatform == TargetPlatform.iOS
+                  ? AppleSettings(
+                      accuracy: LocationAccuracy.high,
+                      distanceFilter: 5,
+                      allowBackgroundLocationUpdates: false,
+                    )
+                  : AndroidSettings(
+                      accuracy: LocationAccuracy.high,
+                      distanceFilter: 5,
+                      intervalDuration: const Duration(seconds: 5),
+                    ),
             )
             .listen(
               (p) {

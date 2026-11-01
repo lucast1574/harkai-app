@@ -1,0 +1,60 @@
+name: iOS compilation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 35
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Install the pinned official Flutter source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch 3.44.5 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter-sdk"
+          test "$(git -C "$RUNNER_TEMP/flutter-sdk" rev-parse HEAD)" = "f94f4fc76b4d74543ed9b085bbd75341ef65de22"
+          echo "$RUNNER_TEMP/flutter-sdk/bin" >> "$GITHUB_PATH"
+      - name: Inspect the Apple toolchain
+        run: |
+          xcodebuild -version
+          flutter --version
+          flutter config --enable-swift-package-manager
+          flutter precache --ios
+      - name: Restore the private Firebase client configuration
+        env:
+          HARKAI_IOS_FIREBASE_PLIST: ${{ secrets.HARKAI_IOS_FIREBASE_PLIST }}
+        run: |
+          test -n "$HARKAI_IOS_FIREBASE_PLIST"
+          printf '%s' "$HARKAI_IOS_FIREBASE_PLIST" > ios/Runner/GoogleService-Info.plist
+      - name: Resolve dependencies and validate configuration
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+      - name: Compile debug with the same Firebase resources
+        run: flutter build ios --debug --no-codesign
+      - name: Compile the real iOS app without distribution credentials
+        run: flutter build ios --release --no-codesign
+      - name: Package the unsigned compilation
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/ios/iphoneos/Runner.app build/ios/Harkai-unsigned.zip
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Harkai-iOS-unsigned
+          path: build/ios/Harkai-unsigned.zip
+          if-no-files-found: error
+          retention-days: 3

@@ -39,7 +39,8 @@ class SharedLocationSource {
 
   LocationSettings? _desired() {
     for (final s in _clients.values) {
-      if (s is AndroidSettings && s.foregroundNotificationConfig != null) {
+      if ((s is AndroidSettings && s.foregroundNotificationConfig != null) ||
+          (s is AppleSettings && s.allowBackgroundLocationUpdates)) {
         return s;
       }
     }

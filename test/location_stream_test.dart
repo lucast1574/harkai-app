@@ -5,6 +5,37 @@ import 'package:harkai/features/location/location_stream.dart';
 
 void main() {
   test(
+    'Apple background consent upgrades the map stream and revocation downgrades it',
+    () async {
+      final opened = <AppleSettings>[];
+      final controllers = <StreamController<Position>>[];
+      final source = SharedLocationSource(
+        nativeWatch: (settings) {
+          opened.add(settings as AppleSettings);
+          final controller = StreamController<Position>();
+          controllers.add(controller);
+          return controller.stream;
+        },
+      );
+      final map = source
+          .watch(AppleSettings(allowBackgroundLocationUpdates: false))
+          .listen((_) {});
+      await Future<void>.delayed(Duration.zero);
+      expect(opened.single.allowBackgroundLocationUpdates, isFalse);
+      final tracking = source
+          .watch(AppleSettings(allowBackgroundLocationUpdates: true))
+          .listen((_) {});
+      await Future<void>.delayed(Duration.zero);
+      expect(opened.last.allowBackgroundLocationUpdates, isTrue);
+      await tracking.cancel();
+      expect(opened.last.allowBackgroundLocationUpdates, isFalse);
+      await map.cancel();
+      for (final controller in controllers) {
+        await controller.close();
+      }
+    },
+  );
+  test(
     'Tracking upgrades an existing map stream and logout removes the foreground service',
     () async {
       final opened = <AndroidSettings>[];

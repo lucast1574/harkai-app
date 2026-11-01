@@ -41,4 +41,7 @@ google_pay.json
 /windows
 /web
 /macos
-/ios
+
+/.release-work/
+
+/ios/Runner/GoogleService-Info.plist

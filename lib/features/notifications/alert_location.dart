@@ -71,9 +71,12 @@ class AlertLocation extends ChangeNotifier with WidgetsBindingObserver {
               setOngoing: true,
             ),
           )
-        : const LocationSettings(
+        : AppleSettings(
             accuracy: LocationAccuracy.high,
             distanceFilter: 10,
+            allowBackgroundLocationUpdates:
+                permission == LocationPermission.always,
+            showBackgroundLocationIndicator: true,
           );
     _positions = watch(settings).listen(
       (position) {
