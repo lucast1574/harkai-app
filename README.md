@@ -1,6 +1,6 @@
 # Harkai móvil
 
-App Flutter Android conectada a la API Go común de Harkai. El código se separa en `core` (contratos, sesión y adaptadores), `features` (flujos funcionales) y `shared` (controles visuales). El menú lateral permite explorar zona, reportes, mascotas, lugares, alertas, historial, actualidad, ayuda y cuenta.
+App Flutter para Android e iOS conectada a la API Go común de Harkai. El código se separa en `core` (contratos, sesión y adaptadores), `features` (flujos funcionales) y `shared` (controles visuales). El menú lateral permite explorar zona, reportes, mascotas, lugares, alertas, historial, actualidad, ayuda y cuenta.
 
 ## Desarrollo
 
@@ -56,3 +56,14 @@ Los reportes usan exclusivamente `ImageSource.camera`, con permiso CAMERA solici
 En el emulador, el micrófono del PC se habilita manualmente en Controles extendidos → Microphone → Enable Host Microphone Access (o Virtual microphone uses host audio input). La app también debe tener RECORD_AUDIO concedido.
 
 La verificación de Android incluye: conceder primero ubicación durante el uso y luego «Permitir siempre», volver a Harkai y comprobar el servicio `GeolocatorLocationService` con `isForeground=true` y tipo location. Repetir con la app minimizada; probar recuperación al volver del GPS apagado y la salida al cerrar sesión. Forzar cierre, revocar permisos, falta de conexión y restricciones del fabricante impiden prometer entrega continua garantizada. No se genera una alerta de producción para estas pruebas.
+
+
+## iOS y configuración de publicación
+
+El proyecto iOS usa `com.lucast.harkai` y el equipo Apple `9BZKHZM3ZB`, con iOS 15 como mínimo. Google login usa el cliente iOS y el esquema de retorno de Firebase. Notificaciones locales y FCM incluyen configuración Apple; el registro de dispositivos envía `ios` al backend. La app espera el token APNs antes de solicitar el token FCM y utiliza ubicación Apple en primer y segundo plano según consentimiento.
+
+`ios/Runner/GoogleService-Info.plist` permanece fuera de Git. En GitHub Actions se restaura desde el secreto `HARKAI_IOS_FIREBASE_PLIST`. La API key iOS se limita al bundle de Harkai y a las APIs Firebase necesarias. Las claves privadas Apple, perfiles y credenciales del servidor se mantienen fuera del repositorio. `python scripts/check_tracked_credentials.py` revisa patrones de credenciales sin imprimir valores.
+
+Debug usa APNs development; Release y Profile usan production. Firebase requiere su clave APNs para cada entorno. La recepción y el acceso de Google en un iPhone físico deben comprobarse con la versión firmada; compilar no prueba la entrega real.
+
+El workflow iOS compila debug y release con Xcode en macOS, y entrega un artefacto sin firma. La firma de distribución y la carga se realizan fuera del repositorio con el perfil exclusivo de Harkai. Las pruebas Go con detector de carreras se ejecutaron en un contenedor aislado del NUC.
