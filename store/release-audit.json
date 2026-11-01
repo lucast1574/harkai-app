@@ -1,0 +1,65 @@
+{
+  "android": {
+    "version": "4.0.0",
+    "build": 4,
+    "package": "com.lucast.harkai",
+    "internalTrack": "AVAILABLE",
+    "closedTrack": "IN_REVIEW",
+    "productionAccess": "12 testers at 2 of 14 days when checked",
+    "bundleSha256": "42f0633527f751701504f973b20ddf4666923f36d43dcfd95d54b24679ad90b4",
+    "firebaseDebugAndReleaseFingerprintsRegistered": true
+  },
+  "ios": {
+    "version": "4.0.0",
+    "build": 4,
+    "bundleId": "com.lucast.harkai",
+    "appleAppId": "6829396398",
+    "teamId": "9BZKHZM3ZB",
+    "profileId": "6DST6UD97X",
+    "appStoreState": "PREPARE_FOR_SUBMISSION",
+    "releaseMode": "MANUAL",
+    "sourceCommit": "5e185bb11ab5e7e3ca16c34e17257a3d8b7446c2",
+    "githubRun": "https://github.com/lucast1574/harkai-app/actions/runs/41286849691",
+    "firebaseConfiguration": "private GitHub Actions secret; restricted iOS client key",
+    "apnsConfiguration": "PENDING_USER_CONFIRMATION",
+    "signed": true,
+    "uploaded": true,
+    "physicalIphoneGoogleLoginAndPushTest": "PENDING",
+    "buildId": "0b4af26b-8940-4083-944f-d5329a230258",
+    "uploadState": {
+      "errors": [],
+      "warnings": [],
+      "infos": [],
+      "state": "COMPLETE"
+    },
+    "processingState": "VALID",
+    "ipaSha256": "60325dafed2267e5706849cc433c36d85c5c0a507ce49f1258c5c5b8a25b4d15",
+    "debugBuild": "PASSED",
+    "releaseBuild": "PASSED",
+    "flutterTests": 56,
+    "flutterAnalysis": "PASSED",
+    "temporaryPrivateKeysRemoved": true,
+    "testFlightInternalGroup": "Harkai QA",
+    "testFlightTestersInvited": 0,
+    "signatureValidation": "Distribution certificate, profile, entitlements and all sealed resources verified",
+    "auxiliaryAssetCheck": "Linux CAR checker does not support one native actool encoding; official Apple upload validation COMPLETE without errors or warnings",
+    "internalBuildState": "READY_FOR_BETA_TESTING",
+    "appStoreDraftBuildAttached": true,
+    "appStoreReviewSubmission": "PENDING: APNs setup and completion of store review materials"
+  },
+  "security": {
+    "githubAlert": 1,
+    "state": "RESOLVED",
+    "resolution": "REVOKED",
+    "configurationRemovedFromMainHistory": true,
+    "trackedCredentialsGuard": true
+  },
+  "backend": {
+    "commit": "a5a4494",
+    "deployment": "DONE",
+    "healthReady": 200,
+    "pushNotifications": true,
+    "raceTests": "PASSED in isolated NUC container",
+    "structure": "PASSED"
+  }
+}
