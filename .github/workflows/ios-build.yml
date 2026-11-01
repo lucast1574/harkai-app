@@ -41,6 +41,7 @@ jobs:
           printf '%s' "$HARKAI_IOS_FIREBASE_PLIST" > ios/Runner/GoogleService-Info.plist
       - name: Resolve dependencies and validate configuration
         run: |
+          python3 scripts/check_tracked_credentials.py
           flutter pub get
           flutter analyze
           flutter test
