@@ -1,0 +1,62 @@
+{
+  "appId": "6829396398",
+  "locale": "es-MX",
+  "createdAt": "2026-11-03T03:13:19Z",
+  "screenshots": {},
+  "experimentId": "d05f89cd-3fbc-497e-acb3-83020aa16b89",
+  "treatmentId": "06e9bb6e-3bc9-46ea-a514-6fa6d99139f0",
+  "localizationId": "67d1aff1-3447-41e4-af6f-59dd32d1d4d8",
+  "uploadedScreenshots": [
+    {
+      "display": "APP_IPHONE_61",
+      "file": "01-mapa.png",
+      "state": "COMPLETE"
+    },
+    {
+      "display": "APP_IPHONE_61",
+      "file": "02-comunidad.png",
+      "state": "COMPLETE"
+    },
+    {
+      "display": "APP_IPHONE_61",
+      "file": "03-reportar.png",
+      "state": "UPLOAD_COMPLETE"
+    },
+    {
+      "display": "APP_IPHONE_61",
+      "file": "04-mascotas.png",
+      "state": "COMPLETE"
+    },
+    {
+      "display": "APP_IPHONE_61",
+      "file": "05-ayuda.png",
+      "state": "UPLOAD_COMPLETE"
+    },
+    {
+      "display": "APP_IPAD_PRO_3GEN_129",
+      "file": "01-mapa.png",
+      "state": "UPLOAD_COMPLETE"
+    },
+    {
+      "display": "APP_IPAD_PRO_3GEN_129",
+      "file": "02-comunidad.png",
+      "state": "COMPLETE"
+    },
+    {
+      "display": "APP_IPAD_PRO_3GEN_129",
+      "file": "03-reportar.png",
+      "state": "COMPLETE"
+    },
+    {
+      "display": "APP_IPAD_PRO_3GEN_129",
+      "file": "04-mascotas.png",
+      "state": "COMPLETE"
+    },
+    {
+      "display": "APP_IPAD_PRO_3GEN_129",
+      "file": "05-ayuda.png",
+      "state": "UPLOAD_COMPLETE"
+    }
+  ],
+  "delivery": "PROCESSING"
+}

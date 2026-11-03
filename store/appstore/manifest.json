@@ -1,0 +1,47 @@
+{
+  "locale": "es-MX",
+  "appId": "6829396398",
+  "iphone": {
+    "width": 1206,
+    "height": 2622
+  },
+  "ipad": {
+    "width": 2064,
+    "height": 2752
+  },
+  "screens": [
+    {
+      "id": "01-mapa",
+      "title": "Tu comunidad.  En el mapa. ",
+      "text": "Explora lo que pasa cerca de ti.",
+      "label": "Mi zona"
+    },
+    {
+      "id": "02-comunidad",
+      "title": "Cada reporte,  con contexto. ",
+      "text": "Distingue lo observado de lo confirmado.",
+      "label": "Comunidad"
+    },
+    {
+      "id": "03-reportar",
+      "title": "Lo que ves  puede ayudar. ",
+      "text": "Describe, ubica y revisa antes de compartir.",
+      "label": "Reportes"
+    },
+    {
+      "id": "04-mascotas",
+      "title": "Ellos también  son del barrio. ",
+      "text": "Comparte y consulta reportes de mascotas.",
+      "label": "Mascotas"
+    },
+    {
+      "id": "05-ayuda",
+      "title": "La ayuda,  más cerca. ",
+      "text": "Consulta lugares de salud, policía y bomberos.",
+      "label": "Lugares de ayuda"
+    }
+  ],
+  "interface": "Real Flutter widgets; fictional local fixtures; iOS platform styling",
+  "background": "AI generated",
+  "status": "ready_for_review"
+}
