@@ -7,6 +7,8 @@ import '../auth/login_screen.dart';
 import '../location/location_service.dart';
 import 'chat_district_picker.dart';
 import 'district_chat_message.dart';
+import 'district_chat_header.dart';
+import 'district_chat_composer.dart';
 
 class DistrictChat extends StatefulWidget {
   const DistrictChat({super.key});
@@ -17,6 +19,7 @@ class DistrictChat extends StatefulWidget {
 class _DistrictChatState extends State<DistrictChat>
     with WidgetsBindingObserver {
   final text = TextEditingController();
+  final composerFocus = FocusNode();
   List<Map<String, dynamic>> catalog = [], messages = [];
   Map<String, dynamic>? district;
   String? error, cursor;
@@ -58,6 +61,7 @@ class _DistrictChatState extends State<DistrictChat>
     timer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     text.dispose();
+    composerFocus.dispose();
     super.dispose();
   }
 
@@ -239,118 +243,83 @@ class _DistrictChatState extends State<DistrictChat>
     final account = AppScope.of(context).account;
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'El chat de tu distrito',
-                style: TextStyle(fontSize: 23, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Lee cualquier zona. Tu nombre y foto no se muestran.',
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: sending ? null : choose,
-                      icon: const Icon(Icons.place_outlined),
-                      label: Text(
-                        district?['name'] as String? ?? 'Elegir distrito',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Mi ubicación',
-                    onPressed: locating || sending ? null : locate,
-                    icon: const Icon(Icons.my_location_outlined),
-                  ),
-                ],
-              ),
-              if (locating) const LinearProgressIndicator(),
-            ],
-          ),
+        DistrictChatHeader(
+          name: district?['name'] as String?,
+          province: district?['province'] as String?,
+          locating: locating,
+          onChoose: sending ? null : choose,
+          onLocate: locating || sending ? null : locate,
         ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: () => load(),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                if (error != null)
-                  MessageCard(
-                    error!,
-                    error: true,
-                    onRetry: district == null ? initialize : load,
-                  ),
-                if (loading && messages.isEmpty)
-                  const LinearProgressIndicator(),
-                if (district != null &&
-                    messages.isEmpty &&
-                    !loading &&
-                    error == null)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Column(
-                      children: [
-                        Icon(Icons.forum_outlined, size: 32),
-                        SizedBox(height: 12),
-                        Text(
-                          'La conversación empieza contigo',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Comparte una novedad o pregunta a tus vecinos.',
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+            child: LayoutBuilder(
+              builder: (context, constraints) => ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  if (error != null)
+                    MessageCard(
+                      error!,
+                      error: true,
+                      onRetry: district == null ? initialize : load,
                     ),
-                  ),
-                if (messages.isNotEmpty)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () async {
-                        final d = district!;
-                        await Clipboard.setData(
-                          ClipboardData(
-                            text:
-                                'https://panel.harkai.lat/distritos/chat-${d['id']}',
-                          ),
-                        );
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Enlace público copiado.'),
+                  if (loading && messages.isEmpty)
+                    const LinearProgressIndicator(),
+                  if (district != null &&
+                      messages.isEmpty &&
+                      !loading &&
+                      error == null)
+                    SizedBox(
+                      height: constraints.maxHeight.clamp(
+                        MediaQuery.textScalerOf(context).scale(400),
+                        double.infinity,
+                      ),
+                      child: DistrictChatEmpty(
+                        district: district!['name'] as String,
+                        onStart: account == null
+                            ? null
+                            : () => composerFocus.requestFocus(),
+                      ),
+                    ),
+                  if (messages.isNotEmpty)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () async {
+                          final d = district!;
+                          await Clipboard.setData(
+                            ClipboardData(
+                              text:
+                                  'https://panel.harkai.lat/distritos/chat-${d['id']}',
                             ),
                           );
-                        }
-                      },
-                      icon: const Icon(Icons.link),
-                      label: const Text('Compartir chat'),
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Enlace público copiado.'),
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.link),
+                        label: const Text('Compartir chat'),
+                      ),
+                    ),
+                  ...messages.map(
+                    (m) => DistrictChatMessage(
+                      key: ValueKey('${m['id']}:${account?.id}'),
+                      message: m,
+                      onDelete: () => remove(m),
                     ),
                   ),
-                ...messages.map(
-                  (m) => DistrictChatMessage(
-                    key: ValueKey('${m['id']}:${account?.id}'),
-                    message: m,
-                    onDelete: () => remove(m),
-                  ),
-                ),
-                if (cursor != null)
-                  TextButton(
-                    onPressed: loading ? null : () => load(more: true),
-                    child: const Text('Mensajes anteriores'),
-                  ),
-              ],
+                  if (cursor != null)
+                    TextButton(
+                      onPressed: loading ? null : () => load(more: true),
+                      child: const Text('Mensajes anteriores'),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -373,40 +342,12 @@ class _DistrictChatState extends State<DistrictChat>
                       child: const Text('Ingresar para conversar'),
                     ),
                   )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextField(
-                        controller: text,
-                        minLines: 1,
-                        maxLines: 3,
-                        maxLength: 1000,
-                        enabled: !sending,
-                        onChanged: (_) => setState(() {}),
-                        decoration: const InputDecoration(
-                          labelText: 'Mensaje anónimo',
-                          hintText: '¿Qué pasa en tu barrio?',
-                          counterText: '',
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'Chat público. Evita datos personales.',
-                              style: TextStyle(fontSize: 11),
-                            ),
-                          ),
-                          FilledButton(
-                            onPressed: sending || text.text.trim().length < 2
-                                ? null
-                                : send,
-                            child: Text(sending ? 'Enviando…' : 'Enviar'),
-                          ),
-                        ],
-                      ),
-                    ],
+                : DistrictChatComposer(
+                    controller: text,
+                    focusNode: composerFocus,
+                    sending: sending,
+                    onChanged: () => setState(() {}),
+                    onSend: send,
                   ),
           ),
       ],

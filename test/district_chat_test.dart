@@ -126,7 +126,7 @@ void main() {
           'Nos vemos en el parque',
         );
         await tester.pump();
-        await tester.tap(find.text('Enviar'));
+        await tester.tap(find.byTooltip('Enviar'));
         await tester.pumpAndSettle();
         expect(writes, 1);
         expect(find.text('Nos vemos en el parque'), findsOneWidget);
