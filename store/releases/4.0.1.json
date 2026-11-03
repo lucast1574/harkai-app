@@ -1,0 +1,44 @@
+{
+  "version": "4.0.1",
+  "build": 5,
+  "sourceCommit": "a286afd",
+  "android": {
+    "package": "com.lucast.harkai",
+    "internalTrack": "AVAILABLE",
+    "closedTrack": "IN_REVIEW",
+    "productionAccess": "Not available for this app; confirmed in Play Console",
+    "bundleSha256": "ca6d07eadfbb22c8893b28d2a427a7617280283fa350a9745df8375f322844e0"
+  },
+  "ios": {
+    "bundleId": "com.lucast.harkai",
+    "appId": "6829396398",
+    "buildId": "0310e98f-cf2e-4309-9d71-93a653647fba",
+    "versionId": "dbf8b363-0ca1-4181-b56a-2bc174aa90de",
+    "submissionId": "ca84a2d4-21ce-41a9-99be-169e66ea2517",
+    "state": "WAITING_FOR_REVIEW",
+    "releaseType": "AFTER_APPROVAL",
+    "processingState": "VALID",
+    "uploadErrors": [],
+    "uploadWarnings": [],
+    "githubRun": "https://github.com/lucast1574/harkai-app/actions/runs/41579599149",
+    "debugCompilation": "PASSED",
+    "releaseCompilation": "PASSED",
+    "signedOn": "NUC 192.168.18.86, isolated Harkai signing container",
+    "signatureValidation": "Distribution identity, profile, entitlements and sealed resources verified; Apple upload validation COMPLETE. Auxiliary Linux CAR parser has the same known native actool encoding limitation as 4.0.0.",
+    "ipaSha256": "1dfedb422daac270a35b2d862d67a94aa7374becf4082e473a5c5622cb882fe0",
+    "temporaryKeysRemoved": true,
+    "testFlightGroup": "Harkai QA",
+    "testFlightInternalState": "READY_FOR_BETA_TESTING"
+  },
+  "changes": [
+    "Request and read iOS camera and microphone permissions; request notifications from settings screen",
+    "Prevent permission reminder overlay during login; restore destination after login",
+    "Limit mobile Community to reports created within the previous 72 hours"
+  ],
+  "validation": {
+    "flutterAnalyze": "PASSED",
+    "localTests": 60,
+    "androidReleaseBundle": "PASSED",
+    "trackedCredentialsGuard": "PASSED"
+  }
+}
