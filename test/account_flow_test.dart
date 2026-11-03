@@ -62,6 +62,58 @@ void main() {
     await reopened.restore();
     expect(reopened.savedAccount?['name'], 'Lucas Santillan');
   });
+  testWidgets('successful login closes without pressing back', (tester) async {
+    final app = AppController(
+      ApiClient(
+        transport: MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'access_token': 'token',
+              'refresh_token': 'refresh',
+              'user': user,
+            }),
+            200,
+          ),
+        ),
+      ),
+    );
+    bool? result;
+    await tester.pumpWidget(
+      AppScope(
+        controller: app,
+        child: MaterialApp(
+          theme: appTheme(Brightness.dark),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () async {
+                  result = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                },
+                child: const Text('Abrir login'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Abrir login'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField).first,
+      'lucas@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).last, 'password');
+    await tester.ensureVisible(find.text('Ingresar'));
+    await tester.tap(find.text('Ingresar'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LoginScreen), findsNothing);
+    expect(result, true);
+    expect(app.account?.id, 'user');
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('login replaces form with loading and recovers after an error', (
     tester,
   ) async {

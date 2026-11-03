@@ -41,7 +41,7 @@ class _NotificationPermissionsState extends State<NotificationPermissions>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) load();
+    if (state == AppLifecycleState.resumed && !busy) load();
   }
 
   Future<void> load() async {
@@ -60,7 +60,7 @@ class _NotificationPermissionsState extends State<NotificationPermissions>
         } else {
           await app.notifications.tracking.start();
         }
-        if (mounted && widget.sheet) Navigator.pop(context);
+        if (mounted && widget.sheet && !busy) Navigator.pop(context);
       }
     } catch (_) {
       if (mounted) {
@@ -136,13 +136,19 @@ class _NotificationPermissionsState extends State<NotificationPermissions>
           : Icons.chevron_right_rounded,
       size: 21,
     ),
-    onTap: () async {
-      try {
-        await DevicePermissions.open(destination);
-      } catch (_) {
-        if (mounted) setState(() => error = 'No se pudo abrir Ajustes.');
-      }
-    },
+    onTap: busy
+        ? null
+        : () async {
+            setState(() => busy = true);
+            try {
+              await DevicePermissions.open(destination);
+              await load();
+            } catch (_) {
+              if (mounted) setState(() => error = 'No se pudo abrir Ajustes.');
+            } finally {
+              if (mounted) setState(() => busy = false);
+            }
+          },
   );
   @override
   Widget build(BuildContext context) {
@@ -245,14 +251,14 @@ class _NotificationPermissionsState extends State<NotificationPermissions>
               'Cámara',
               'Se solicita al tomar la foto de un reporte',
               p.camera,
-              'appSettings',
+              'requestCamera',
             ),
             setting(
               Icons.mic_none_rounded,
               'Micrófono',
               'Se solicita al describir un reporte con tu voz',
               p.microphone,
-              'appSettings',
+              'requestMicrophone',
             ),
             setting(
               Icons.battery_saver_outlined,

@@ -10,6 +10,53 @@ import 'package:harkai/features/reports/report_categories.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test(
+    'community cutoff includes exactly 72 hours and preserves history',
+    () async {
+      final cutoff = DateTime.utc(2026, 11, 1, 12);
+      final repository = ReportRepository(
+        ApiClient(
+          transport: MockClient(
+            (_) async => http.Response(
+              jsonEncode({
+                'items': [
+                  for (final hours in [-1, 0, 1])
+                    {
+                      'id': '$hours',
+                      'type': 'fire',
+                      'description': 'Reporte',
+                      'status': 'active',
+                      'latitude': -12,
+                      'longitude': -77,
+                      'verified': false,
+                      'created_at': cutoff
+                          .add(Duration(hours: hours))
+                          .toIso8601String(),
+                    },
+                ],
+                'next_cursor': 'next',
+              }),
+              200,
+            ),
+          ),
+        ),
+      );
+      final recent = await repository.list(
+        latitude: -12,
+        longitude: -77,
+        archive: true,
+        createdAfter: cutoff,
+      );
+      expect(recent.items.map((item) => item.id), ['0', '1']);
+      expect(recent.cursor, 'next');
+      final history = await repository.list(
+        latitude: -12,
+        longitude: -77,
+        history: true,
+      );
+      expect(history.items, hasLength(3));
+    },
+  );
+  test(
     'crime includes all subtypes and only paginates unfinished categories',
     () async {
       FlutterSecureStorage.setMockInitialValues({});

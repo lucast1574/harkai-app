@@ -105,7 +105,8 @@ class _AppShellState extends State<AppShell> {
   Future<bool> create({String? initialType, LatLng? initialPoint}) async {
     if (AppScope.of(context).account == null) {
       await login();
-      if (!mounted || AppScope.of(context).account == null) return false;
+      if (mounted && AppScope.of(context).account != null) selectSection(0);
+      return false;
     }
     final category = crimeTypes.contains(initialType)
         ? 'crime'

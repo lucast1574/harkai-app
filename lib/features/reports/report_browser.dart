@@ -136,7 +136,8 @@ class _ReportBrowserState extends State<ReportBrowser> {
         },
       );
       type = widget.fixedType;
-      if (widget.homeMode) {
+      if (widget.homeMode ||
+          (!widget.history && !widget.alerts && widget.fixedType.isEmpty)) {
         refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
           if (mounted &&
               !busy &&
@@ -189,6 +190,13 @@ class _ReportBrowserState extends State<ReportBrowser> {
         history: widget.history,
         archive: !widget.homeMode,
         alerts: widget.alerts,
+        createdAfter:
+            !widget.homeMode &&
+                !widget.history &&
+                !widget.alerts &&
+                widget.fixedType.isEmpty
+            ? DateTime.now().subtract(const Duration(days: 3))
+            : null,
       );
       if (mounted && version == generation) {
         setState(() {
@@ -197,6 +205,15 @@ class _ReportBrowserState extends State<ReportBrowser> {
                   for (final i in [...items, ...page.items]) i.id: i,
                 }.values.toList()
               : page.items;
+          if (!widget.homeMode &&
+              !widget.history &&
+              !widget.alerts &&
+              widget.fixedType.isEmpty) {
+            final cutoff = DateTime.now().subtract(const Duration(days: 3));
+            items = items
+                .where((item) => !item.createdAt.isBefore(cutoff))
+                .toList();
+          }
           cursor = page.cursor;
         });
       }

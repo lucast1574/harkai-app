@@ -49,7 +49,11 @@ class _LoginScreenState extends State<LoginScreen> {
           name: register ? name.text.trim() : null,
         );
       }
-      if (mounted) Navigator.pop(context, true);
+      if (mounted) {
+        setState(() => busy = false);
+        await WidgetsBinding.instance.endOfFrame;
+        if (mounted) Navigator.pop(context, true);
+      }
       return true;
     } catch (e) {
       if (mounted) setState(() => error = e.toString());

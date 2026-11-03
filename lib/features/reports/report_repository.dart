@@ -16,6 +16,7 @@ class ReportRepository {
     bool history = false,
     bool alerts = false,
     bool archive = false,
+    DateTime? createdAfter,
   }) async {
     if (type == 'crime') {
       final cursors = cursor == null
@@ -36,6 +37,7 @@ class ReportRepository {
             history: history,
             alerts: alerts,
             archive: archive,
+            createdAfter: createdAfter,
           ),
         ),
       );
@@ -63,7 +65,7 @@ class ReportRepository {
         'cursor': ?cursor,
       },
     ).query;
-    return ReportPage.fromJson(
+    final page = ReportPage.fromJson(
       await api.request(
         'GET',
         '${history
@@ -76,6 +78,14 @@ class ReportRepository {
         authenticated: history || alerts,
       ),
     );
+    return createdAfter == null
+        ? page
+        : ReportPage(
+            page.items
+                .where((item) => !item.createdAt.isBefore(createdAfter))
+                .toList(),
+            page.cursor,
+          );
   }
 
   Future<Incident> find(String id) async => Incident.fromJson(

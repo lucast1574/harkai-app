@@ -38,6 +38,11 @@ class MainActivity: FlutterActivity() {
                         else if (cameraResult != null) result.error("permission_pending", "Ya hay una solicitud de cámara abierta.", null)
                         else { cameraResult = result; requestPermissions(arrayOf(Manifest.permission.CAMERA), 4181) }
                     }
+                    "requestMicrophone" -> {
+                        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) result.success(true)
+                        else if (cameraResult != null) result.error("permission_pending", "Ya hay una solicitud de permiso abierta.", null)
+                        else { cameraResult = result; requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 4181) }
+                    }
                     "appSettings" -> { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))); result.success(true) }
                     "locationSettings" -> { startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)); result.success(true) }
                     "notificationSettings" -> {

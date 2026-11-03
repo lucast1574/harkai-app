@@ -57,7 +57,12 @@ class _NotificationGateState extends State<NotificationGate>
   }
 
   Future<void> check() async {
-    if (!mounted || checking || dialogOpen) return;
+    if (!mounted ||
+        checking ||
+        dialogOpen ||
+        ModalRoute.of(context)?.isCurrent == false) {
+      return;
+    }
     final app = AppScope.of(context);
     if (app.loading || app.capabilities['push_notifications'] != true) return;
     checking = true;
@@ -88,7 +93,9 @@ class _NotificationGateState extends State<NotificationGate>
         }
         if (complete.ready) return;
       }
-      if (shown || !mounted) return;
+      if (shown || !mounted || ModalRoute.of(context)?.isCurrent == false) {
+        return;
+      }
       shown = true;
       dialogOpen = true;
       await showModalBottomSheet<void>(
