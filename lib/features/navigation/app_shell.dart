@@ -151,7 +151,7 @@ class _AppShellState extends State<AppShell> {
       showMap: false,
       onMapTarget: showOnMap,
     ),
-    4 => BusinessDirectory(onMap: showOnMap),
+    4 => BusinessDirectory(own: true, onMap: showOnMap),
     5 => const ProfileScreen(),
     _ => homeMap(),
   };

@@ -20,16 +20,22 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
   List<BusinessPoint> items = [];
   String? error, cursor;
   bool busy = false, started = false;
+  String? loadedOwner;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!started) {
+    final owner = AppScope.of(context).account?.id;
+    if (!started || (widget.own && loadedOwner != owner)) {
       started = true;
+      loadedOwner = owner;
+      items = [];
+      cursor = null;
       Future.microtask(load);
     }
   }
 
   Future<void> load({bool more = false}) async {
+    if (widget.own && AppScope.of(context).account == null) return;
     setState(() {
       busy = true;
       error = null;
@@ -77,6 +83,10 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
       );
     }
     if (!mounted || app.account == null) return;
+    if (widget.own) {
+      await load();
+      return;
+    }
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -90,6 +100,8 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
   }
 
   Future<void> toggle(BusinessPoint p) async {
+    if (busy) return;
+    setState(() => busy = true);
     try {
       await AppScope.of(context).api.request(
         'PATCH',
@@ -99,112 +111,144 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
       if (mounted) await load();
     } catch (e) {
       if (mounted) setState(() => error = e.toString());
+    } finally {
+      if (mounted) setState(() => busy = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) => RefreshIndicator(
-    onRefresh: load,
-    child: ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Text(
-          widget.own
-              ? 'Tu negocio, cerca de los vecinos'
-              : 'Tu lugar en la comunidad',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          widget.own
-              ? 'Prepara tu punto y envíalo a revisión. Cada punto se paga una sola vez. Los pagos con Stripe están pendientes de habilitar.'
-              : 'Descubre negocios de tu zona o pon el tuyo en el mapa.',
-        ),
-        if (!widget.own)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Card(
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+  Widget build(BuildContext context) {
+    if (widget.own && AppScope.of(context).account == null) {
+      return ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          const SizedBox(height: 24),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Icon(Icons.storefront_outlined, size: 48),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Tu negocio, cerca de los vecinos',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Cuenta qué ofreces, marca tu ubicación y envía tu negocio a revisión. Gratis por ahora, sin tarjeta.',
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: manageBusiness,
+            child: const Text('Ingresar y registrar mi negocio'),
+          ),
+        ],
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: load,
+      child: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Text(
+            widget.own
+                ? 'Tu negocio, cerca de los vecinos'
+                : 'Tu lugar en la comunidad',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.own
+                ? 'Pon tu negocio en el mapa gratis, sin tarjeta. Añade una oferta y conecta con personas cercanas.'
+                : 'Descubre negocios de tu zona o pon el tuyo en el mapa.',
+          ),
+          if (!widget.own)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Card(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  leading: const Icon(Icons.add_business_outlined),
+                  title: const Text('Pon tu negocio en el mapa'),
+                  subtitle: const Text(
+                    'Crea y administra tu punto promocionado',
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: manageBusiness,
                 ),
-                leading: const Icon(Icons.add_business_outlined),
-                title: const Text('Pon tu negocio en el mapa'),
-                subtitle: const Text('Crea y administra tu punto promocionado'),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: manageBusiness,
               ),
             ),
-          ),
-        if (widget.own)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: FilledButton.icon(
-              onPressed: () => edit(),
-              icon: const Icon(Icons.add_business_outlined),
-              label: const Text('Registrar negocio'),
+          if (widget.own)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: FilledButton.icon(
+                onPressed: () => edit(),
+                icon: const Icon(Icons.add_business_outlined),
+                label: const Text('Registrar negocio'),
+              ),
             ),
-          ),
-        if (error != null) MessageCard(error!, error: true, onRetry: load),
-        if (busy) const LinearProgressIndicator(),
-        for (final p in items)
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.storefront_outlined),
-                  title: Text(p.name),
-                  subtitle: Text(
-                    widget.own
-                        ? 'Revisión: ${businessStates[p.data['moderation']] ?? p.data['moderation']} · Pago: ${businessStates[p.data['billing_status']] ?? p.data['billing_status']}'
-                        : '${businessKinds[p.data['kind']] ?? 'Negocio'} · Promocionado',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => widget.own
-                      ? edit(p)
-                      : widget.onMap?.call(MapTarget.business(p)),
-                ),
-                if (widget.own)
-                  TextButton.icon(
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BusinessPromotion(point: p),
-                        ),
-                      );
-                      if (mounted) await load();
-                    },
-                    icon: const Icon(Icons.local_offer_outlined),
-                    label: const Text('Oferta y código de descuento'),
-                  ),
-                if (widget.own)
-                  SwitchListTile(
-                    title: Text(
-                      p.enabled ? 'Punto habilitado' : 'Punto pausado',
+          if (error != null) MessageCard(error!, error: true, onRetry: load),
+          if (busy) const LinearProgressIndicator(),
+          for (final p in items)
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.storefront_outlined),
+                    title: Text(p.name),
+                    subtitle: Text(
+                      widget.own
+                          ? '${businessStates[p.data['moderation']] ?? p.data['moderation']} · ${p.data['payment_mode'] == 'free' ? 'Gratis' : 'Registro anterior'}'
+                          : '${businessKinds[p.data['kind']] ?? 'Negocio'} · Promocionado',
                     ),
-                    subtitle: const Text(
-                      'Solo se muestra con revisión aprobada y un pago confirmado.',
-                    ),
-                    value: p.enabled,
-                    onChanged: busy ? null : (_) => toggle(p),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => widget.own
+                        ? edit(p)
+                        : widget.onMap?.call(MapTarget.business(p)),
                   ),
-              ],
+                  if (widget.own)
+                    TextButton.icon(
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BusinessPromotion(point: p),
+                          ),
+                        );
+                        if (mounted) await load();
+                      },
+                      icon: const Icon(Icons.local_offer_outlined),
+                      label: const Text('Oferta y código de descuento'),
+                    ),
+                  if (widget.own)
+                    SwitchListTile(
+                      title: Text(
+                        p.enabled ? 'Punto habilitado' : 'Punto pausado',
+                      ),
+                      subtitle: const Text(
+                        'Aparecerá en el mapa cuando esté aprobado y habilitado.',
+                      ),
+                      value: p.enabled,
+                      onChanged: busy ? null : (_) => toggle(p),
+                    ),
+                ],
+              ),
             ),
-          ),
-        if (!busy && items.isEmpty && error == null)
-          MessageCard(
-            widget.own
-                ? 'Todavía no registraste un negocio.'
-                : 'No hay negocios promocionados en esta zona.',
-          ),
-        if (cursor != null)
-          TextButton(
-            onPressed: busy ? null : () => load(more: true),
-            child: const Text('Ver más'),
-          ),
-      ],
-    ),
-  );
+          if (!busy && items.isEmpty && error == null)
+            MessageCard(
+              widget.own
+                  ? 'Todavía no registraste un negocio.'
+                  : 'No hay negocios promocionados en esta zona.',
+            ),
+          if (cursor != null)
+            TextButton(
+              onPressed: busy ? null : () => load(more: true),
+              child: const Text('Ver más'),
+            ),
+        ],
+      ),
+    );
+  }
 }

@@ -28,8 +28,11 @@ class _BusinessPromotionState extends State<BusinessPromotion> {
   }
 
   Future<void> save() async {
-    if (!form.currentState!.validate()) return;
-    setState(() => busy = true);
+    if (busy || !form.currentState!.validate()) return;
+    setState(() {
+      busy = true;
+      error = null;
+    });
     try {
       final data = widget.point.data;
       await AppScope.of(context).api.request(
@@ -112,7 +115,7 @@ class _BusinessPromotionState extends State<BusinessPromotion> {
           ),
           const SizedBox(height: 20),
           const MessageCard(
-            'Un pago único por punto. Puedes crear varios puntos y administrar cada oferta por separado. Los pagos con Stripe todavía no están habilitados; tu punto quedará preparado y en revisión.',
+            'Actualizar tu oferta es gratis. Revisaremos los cambios antes de volver a mostrar tu negocio en el mapa.',
           ),
           if (error != null) MessageCard(error!, error: true),
           const SizedBox(height: 20),
