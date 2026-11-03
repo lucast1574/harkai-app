@@ -3,8 +3,15 @@ import 'report_comments.dart';
 
 class DistrictChatMessage extends StatefulWidget {
   final Map<String, dynamic> message;
-  final VoidCallback? onDelete;
-  const DistrictChatMessage({super.key, required this.message, this.onDelete});
+  final VoidCallback? onDelete, onReply;
+  final int revision;
+  const DistrictChatMessage({
+    super.key,
+    required this.message,
+    this.onDelete,
+    this.onReply,
+    this.revision = 0,
+  });
   @override
   State<DistrictChatMessage> createState() => _DistrictChatMessageState();
 }
@@ -49,12 +56,27 @@ class _DistrictChatMessageState extends State<DistrictChatMessage> {
             const SizedBox(height: 12),
             SelectableText(m['body'] as String),
             TextButton.icon(
-              onPressed: () => setState(() => replies = !replies),
+              onPressed: widget.onReply == null
+                  ? null
+                  : () {
+                      setState(() => replies = true);
+                      widget.onReply!();
+                    },
               icon: const Icon(Icons.chat_bubble_outline, size: 17),
-              label: Text(replies ? 'Ocultar respuestas' : 'Responder'),
+              label: const Text('Responder'),
             ),
             if (replies)
-              ReportComments(incidentId: m['id'] as String, namespace: 'forum'),
+              TextButton(
+                onPressed: () => setState(() => replies = false),
+                child: const Text('Ocultar respuestas'),
+              ),
+            if (replies)
+              ReportComments(
+                incidentId: m['id'] as String,
+                namespace: 'forum',
+                showComposer: false,
+                revision: widget.revision,
+              ),
           ],
         ),
       ),

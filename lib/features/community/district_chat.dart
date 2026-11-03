@@ -21,7 +21,8 @@ class _DistrictChatState extends State<DistrictChat>
   final text = TextEditingController();
   final composerFocus = FocusNode();
   List<Map<String, dynamic>> catalog = [], messages = [];
-  Map<String, dynamic>? district;
+  Map<String, dynamic>? district, replyingTo;
+  int replyRevision = 0;
   String? error, cursor;
   bool initialized = false, loading = false, sending = false, locating = false;
   int generation = 0, locationGeneration = 0;
@@ -111,6 +112,8 @@ class _DistrictChatState extends State<DistrictChat>
     locationGeneration++;
     setState(() {
       district = value;
+      replyingTo = null;
+      text.clear();
       messages = [];
       cursor = null;
       error = null;
@@ -187,17 +190,23 @@ class _DistrictChatState extends State<DistrictChat>
       sending = true;
       error = null;
     });
+    final reply = replyingTo;
     try {
       final created = await AppScope.of(context).api.request(
         'POST',
-        'forum',
-        body: {'district_id': district!['id'], 'body': text.text.trim()},
+        reply == null ? 'forum' : 'forum/${reply['id']}/comments',
+        body: {
+          if (reply == null) 'district_id': district!['id'],
+          'body': text.text.trim(),
+        },
       );
       if (!mounted) return;
       generation++;
       text.clear();
       setState(() {
-        messages = [created, ...messages];
+        if (reply == null) messages = [created, ...messages];
+        replyingTo = null;
+        replyRevision++;
         loading = false;
       });
     } catch (e) {
@@ -232,7 +241,12 @@ class _DistrictChatState extends State<DistrictChat>
       await AppScope.of(
         context,
       ).api.request('DELETE', 'forum/${message['id']}');
-      if (mounted) await load();
+      if (mounted) {
+        if (replyingTo?['id'] == message['id']) {
+          setState(() => replyingTo = null);
+        }
+        await load();
+      }
     } catch (e) {
       if (mounted) setState(() => error = e.toString());
     }
@@ -310,6 +324,13 @@ class _DistrictChatState extends State<DistrictChat>
                     (m) => DistrictChatMessage(
                       key: ValueKey('${m['id']}:${account?.id}'),
                       message: m,
+                      revision: replyRevision,
+                      onReply: sending
+                          ? null
+                          : () {
+                              setState(() => replyingTo = m);
+                              composerFocus.requestFocus();
+                            },
                       onDelete: () => remove(m),
                     ),
                   ),
@@ -348,6 +369,10 @@ class _DistrictChatState extends State<DistrictChat>
                     sending: sending,
                     onChanged: () => setState(() {}),
                     onSend: send,
+                    replyBody: replyingTo?['body'] as String?,
+                    onCancelReply: sending
+                        ? null
+                        : () => setState(() => replyingTo = null),
                   ),
           ),
       ],

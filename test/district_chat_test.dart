@@ -31,7 +31,8 @@ void main() {
       final gps = GeolocatorPlatform.instance;
       GeolocatorPlatform.instance = ChatGps();
       addTearDown(() => GeolocatorPlatform.instance = gps);
-      int writes = 0;
+      int writes = 0, replyWrites = 0;
+      final replies = <Map<String, dynamic>>[];
       final catalog = [
         {
           'id': '130101',
@@ -53,6 +54,24 @@ void main() {
       final app = AppController(
         ApiClient(
           transport: MockClient((r) async {
+            if (r.url.path.endsWith('/comments')) {
+              if (r.method == 'POST') {
+                replyWrites++;
+                expect(jsonDecode(r.body).containsKey('district_id'), false);
+                expect(
+                  r.url.path,
+                  '/v1/forum/bbbbbbbbbbbbbbbbbbbbbbbb/comments',
+                );
+                final reply = {
+                  'id': 'cccccccccccccccccccccccc',
+                  'body': jsonDecode(r.body)['body'],
+                  'created_at': '2026-11-03T16:00:00Z',
+                };
+                replies.add(reply);
+                return http.Response(jsonEncode(reply), 201);
+              }
+              return http.Response(jsonEncode({'items': replies}), 200);
+            }
             if (r.method == 'POST') {
               writes++;
               expect(jsonDecode(r.body)['district_id'], '130101');
@@ -130,6 +149,25 @@ void main() {
         await tester.pumpAndSettle();
         expect(writes, 1);
         expect(find.text('Nos vemos en el parque'), findsOneWidget);
+        await tester.tap(find.text('Responder').first);
+        await tester.pumpAndSettle();
+        expect(find.byType(TextField), findsOneWidget);
+        expect(find.byType(TextFormField), findsNothing);
+        expect(find.text('Respondiendo a un vecino'), findsOneWidget);
+        await tester.enterText(find.byType(TextField), 'Llevo una pelota');
+        await tester.tap(find.byTooltip('Cancelar respuesta'));
+        await tester.pumpAndSettle();
+        expect(find.text('Respondiendo a un vecino'), findsNothing);
+        expect(find.text('Llevo una pelota'), findsOneWidget);
+        await tester.tap(find.text('Responder').first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.byTooltip('Enviar'));
+        await tester.pumpAndSettle();
+        expect(replyWrites, 1);
+        expect(writes, 1);
+        expect(find.text('Llevo una pelota'), findsOneWidget);
+        expect(find.text('Respondiendo a un vecino'), findsNothing);
+        expect(find.byType(TextField), findsOneWidget);
       } else {
         expect(find.text('Ingresar para conversar'), findsOneWidget);
         expect(find.byType(TextField), findsNothing);

@@ -9,10 +9,14 @@ import 'comment_tile.dart';
 class ReportComments extends StatefulWidget {
   final String incidentId;
   final String namespace;
+  final bool showComposer;
+  final int revision;
   const ReportComments({
     super.key,
     required this.incidentId,
     this.namespace = 'incidents',
+    this.showComposer = true,
+    this.revision = 0,
   });
   @override
   State<ReportComments> createState() => _ReportCommentsState();
@@ -37,6 +41,12 @@ class _ReportCommentsState extends State<ReportComments> {
       initialized = true;
       Future.microtask(load);
     }
+  }
+
+  @override
+  void didUpdateWidget(covariant ReportComments oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.revision != widget.revision) load();
   }
 
   @override
@@ -148,52 +158,53 @@ class _ReportCommentsState extends State<ReportComments> {
             child: const Text('Ver más comentarios'),
           ),
         if (error != null) MessageCard(error!, error: true, onRetry: load),
-        if (app.account == null)
-          OutlinedButton(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-            ),
-            child: const Text('Ingresar para comentar'),
-          )
-        else
-          Form(
-            key: form,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextFormField(
-                  controller: text,
-                  minLines: 3,
-                  maxLines: 6,
-                  maxLength: 1000,
-                  decoration: const InputDecoration(
-                    labelText: 'Tu comentario',
-                    hintText: '¿Qué información puedes aportar?',
+        if (widget.showComposer)
+          if (app.account == null)
+            OutlinedButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginScreen()),
+              ),
+              child: const Text('Ingresar para comentar'),
+            )
+          else
+            Form(
+              key: form,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextFormField(
+                    controller: text,
+                    minLines: 3,
+                    maxLines: 6,
+                    maxLength: 1000,
+                    decoration: const InputDecoration(
+                      labelText: 'Tu comentario',
+                      hintText: '¿Qué información puedes aportar?',
+                    ),
+                    validator: (value) => (value?.trim().length ?? 0) < 2
+                        ? 'Escribe al menos dos caracteres.'
+                        : null,
                   ),
-                  validator: (value) => (value?.trim().length ?? 0) < 2
-                      ? 'Escribe al menos dos caracteres.'
-                      : null,
-                ),
-                const Text(
-                  'Participas como vecino anónimo. Evita insultos y datos que te identifiquen.',
-                  style: TextStyle(fontSize: 12),
-                ),
-                TextButton(
-                  onPressed: () => launchUrl(
-                    Uri.parse('https://harkai.lat/normas-comunidad/'),
-                    mode: LaunchMode.externalApplication,
+                  const Text(
+                    'Participas como vecino anónimo. Evita insultos y datos que te identifiquen.',
+                    style: TextStyle(fontSize: 12),
                   ),
-                  child: const Text('Normas de la comunidad'),
-                ),
-                FilledButton.icon(
-                  onPressed: busy ? null : publish,
-                  icon: const Icon(Icons.send_outlined, size: 18),
-                  label: Text(busy ? 'Publicando…' : 'Comentar'),
-                ),
-              ],
+                  TextButton(
+                    onPressed: () => launchUrl(
+                      Uri.parse('https://harkai.lat/normas-comunidad/'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                    child: const Text('Normas de la comunidad'),
+                  ),
+                  FilledButton.icon(
+                    onPressed: busy ? null : publish,
+                    icon: const Icon(Icons.send_outlined, size: 18),
+                    label: Text(busy ? 'Publicando…' : 'Comentar'),
+                  ),
+                ],
+              ),
             ),
-          ),
       ],
     );
   }

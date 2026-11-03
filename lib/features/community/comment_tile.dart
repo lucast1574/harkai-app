@@ -28,7 +28,7 @@ class CommentTile extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               Text(
-                '${comment.createdAt.toLocal()}',
+                '${MaterialLocalizations.of(context).formatShortDate(comment.createdAt.toLocal())} · ${TimeOfDay.fromDateTime(comment.createdAt.toLocal()).format(context)}',
                 style: Theme.of(context).textTheme.labelSmall,
               ),
               if (!comment.deleted)
