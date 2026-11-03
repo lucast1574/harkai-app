@@ -47,7 +47,7 @@ void main() {
     await tester.pump();
     expect(find.byType(Drawer), findsNothing);
     expect(find.text('Alertas'), findsNothing);
-    expect(find.text('Ponte en el mapa'), findsOneWidget);
+    expect(find.text('Negocios'), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsNothing);
     expect(find.text('Cuenta'), findsNothing);
     expect(

@@ -311,7 +311,7 @@ class _AppShellState extends State<AppShell> {
             NavigationDestination(
               icon: Icon(Icons.add_business_outlined),
               selectedIcon: Icon(Icons.add_business_rounded),
-              label: 'Ponte en el mapa',
+              label: 'Negocios',
             ),
           ],
         ),
