@@ -148,18 +148,20 @@ class _CommunityMapState extends State<CommunityMap> {
       children: [
         MapBaseTiles(dark: Theme.of(context).brightness == Brightness.dark),
         if (widget.incidents.isNotEmpty)
-          CircleLayer(
-            circles: widget.incidents.map((i) {
-              final visual = categoryVisual(i.type);
-              return CircleMarker(
-                point: LatLng(i.latitude, i.longitude),
-                radius: 85,
-                useRadiusInMeter: true,
-                color: visual.color.withValues(alpha: 0.16),
-                borderColor: visual.color.withValues(alpha: 0.55),
-                borderStrokeWidth: 1.5,
-              );
-            }).toList(),
+          Opacity(
+            opacity: 0.55,
+            child: CircleLayer(
+              circles: widget.incidents.map((i) {
+                final visual = categoryVisual(i.type);
+                return CircleMarker(
+                  point: LatLng(i.latitude, i.longitude),
+                  radius: 85,
+                  useRadiusInMeter: true,
+                  color: visual.color.withValues(alpha: 0.22),
+                  borderStrokeWidth: 0,
+                );
+              }).toList(),
+            ),
           ),
         if (widget.target != null && widget.userPosition != null)
           PolylineLayer(
@@ -209,9 +211,8 @@ class _CommunityMapState extends State<CommunityMap> {
             ...widget.businesses.map(
               (p) => Marker(
                 point: LatLng(p.latitude, p.longitude),
-                width: 52,
-                height: 58,
-                alignment: Alignment.topCenter,
+                width: 44,
+                height: 44,
                 child: BusinessMapMarker(
                   name: p.name,
                   selected: widget.selectedId == p.id,
@@ -272,6 +273,7 @@ class _CommunityMapState extends State<CommunityMap> {
                   onTap: widget.onReport == null
                       ? null
                       : () => widget.onReport!(i),
+                  behavior: HitTestBehavior.opaque,
                   child: Tooltip(
                     message: '${visual.shortLabel} · ${i.verificationLabel}',
                     child: Stack(
@@ -279,25 +281,21 @@ class _CommunityMapState extends State<CommunityMap> {
                       alignment: Alignment.center,
                       children: [
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: 26,
+                          height: 26,
                           decoration: BoxDecoration(
-                            color: visual.color,
+                            color: visual.color.withValues(alpha: 0.28),
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2.2),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black38,
-                                blurRadius: 7,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
+                            border: Border.all(
+                              color: visual.color.withValues(alpha: 0.55),
+                              width: 1,
+                            ),
                           ),
                           child: Center(
                             child: CategoryGlyph(
                               type: i.type,
-                              size: 18,
-                              color: Colors.white,
+                              size: 14,
+                              color: visual.color.withValues(alpha: 0.8),
                             ),
                           ),
                         ),

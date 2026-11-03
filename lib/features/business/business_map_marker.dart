@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 
-/// Compact storefront with a tip anchored to the business coordinates.
+/// Subtle storefront centered on its location, with a generous touch target.
 class BusinessMapMarker extends StatelessWidget {
   final String name;
   final bool selected;
@@ -23,50 +23,32 @@ class BusinessMapMarker extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            Positioned(
-              bottom: 4,
-              child: Transform.rotate(
-                angle: .785398,
-                child: Container(width: 14, height: 14, color: Colors.white),
-              ),
-            ),
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: selected ? navy : const Color(0xff245b8f),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x33011935),
-                    blurRadius: 8,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.storefront_outlined,
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: selected ? 34 : 28,
+            height: selected ? 34 : 28,
+            decoration: BoxDecoration(
+              color: selected ? navy : const Color(0xe6245b8f),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
                 color: selected ? green : Colors.white,
-                size: 26,
+                width: 1.5,
               ),
-            ),
-            Positioned(
-              top: 3,
-              right: 5,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: green,
-                  shape: BoxShape.circle,
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x20011935),
+                  blurRadius: 3,
+                  offset: Offset(0, 1),
                 ),
-              ),
+              ],
             ),
-          ],
+            child: Icon(
+              Icons.storefront_outlined,
+              color: selected ? green : Colors.white,
+              size: selected ? 20 : 17,
+            ),
+          ),
         ),
       ),
     ),
