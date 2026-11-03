@@ -18,11 +18,19 @@ class MapTargetSheet extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) => DraggableScrollableSheet(
-    initialChildSize: target.support?.photoUrls.isNotEmpty == true ? .52 : .38,
+    initialChildSize:
+        (target.support?.photoUrls.isNotEmpty == true ||
+            (target.businessPoint?.data['media_id'] as String?)?.isNotEmpty ==
+                true)
+        ? .52
+        : .38,
     minChildSize: .24,
     maxChildSize: .96,
     snap: true,
-    snapSizes: target.support?.photoUrls.isNotEmpty == true
+    snapSizes:
+        (target.support?.photoUrls.isNotEmpty == true ||
+            (target.businessPoint?.data['media_id'] as String?)?.isNotEmpty ==
+                true)
         ? const [.52, .65, .96]
         : const [.38, .65, .96],
     shouldCloseOnMinExtent: false,
@@ -96,11 +104,15 @@ class MapTargetSheet extends StatelessWidget {
               )
             : ListView(
                 controller: controller,
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.paddingOf(context).bottom + 24,
+                ),
                 children: [
-                  header,
                   if (target.businessPoint != null)
-                    BusinessDetails(point: target.businessPoint!)
+                    BusinessDetails(
+                      point: target.businessPoint!,
+                      onClose: onClose,
+                    )
                   else
                     SupportPlaceDetails(place: target.support!),
                 ],

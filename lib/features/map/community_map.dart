@@ -8,6 +8,7 @@ import '../help/support_place.dart';
 import 'user_location_marker.dart';
 import 'map_base_tiles.dart';
 import '../business/business_point.dart';
+import '../business/business_map_marker.dart';
 
 class CommunityMap extends StatefulWidget {
   final LatLng center;
@@ -208,39 +209,13 @@ class _CommunityMapState extends State<CommunityMap> {
             ...widget.businesses.map(
               (p) => Marker(
                 point: LatLng(p.latitude, p.longitude),
-                width: 72,
-                height: 84,
-                child: GestureDetector(
+                width: 52,
+                height: 58,
+                alignment: Alignment.topCenter,
+                child: BusinessMapMarker(
+                  name: p.name,
+                  selected: widget.selectedId == p.id,
                   onTap: () => widget.onBusiness?.call(p),
-                  child: Tooltip(
-                    message: "${p.name} · Promocionado",
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: navy,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: promotionAmber, width: 2),
-                      ),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.storefront_rounded,
-                            color: promotionAmber,
-                            size: 28,
-                          ),
-                          SizedBox(height: 3),
-                          Text(
-                            'PROMO',
-                            style: TextStyle(
-                              color: promotionAmber,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ),
               ),
             ),

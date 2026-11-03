@@ -117,7 +117,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.drag(find.text('Lugar promocionado'), const Offset(0, -400));
+    await tester.drag(find.text('Negocio local'), const Offset(0, -400));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('VECINO10'),
