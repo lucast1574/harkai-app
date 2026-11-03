@@ -25,7 +25,7 @@ CategoryVisual categoryVisual(String type) => switch (type) {
   'crime' => const CategoryVisual(
     id: 'crime',
     shortLabel: 'Crimen',
-    color: Color(0xff573a83),
+    color: Color(0xff7e22ce),
     icon: Icons.report_outlined,
     callLabel: 'Llamar a Policía (105)',
   ),
@@ -50,7 +50,7 @@ CategoryVisual categoryVisual(String type) => switch (type) {
   'emergency' => const CategoryVisual(
     id: 'emergency',
     shortLabel: 'Emergencia',
-    color: Color(0xffb91c1c),
+    color: Color(0xffdc3545),
     asset: 'assets/images/alert.png',
     icon: Icons.medical_services_rounded,
     callLabel: 'Llamar a SAMU (106)',
@@ -68,7 +68,7 @@ CategoryVisual categoryVisual(String type) => switch (type) {
   'extortion' => const CategoryVisual(
     id: 'extortion',
     shortLabel: 'Extorsión',
-    color: Color(0xff4f46e5),
+    color: Color(0xff7e22ce),
     asset: 'assets/images/alert.png',
     icon: Icons.gpp_maybe_rounded,
     callLabel: 'Denunciar Extorsión (1818)',
@@ -77,7 +77,7 @@ CategoryVisual categoryVisual(String type) => switch (type) {
   'kidnapping' => const CategoryVisual(
     id: 'kidnapping',
     shortLabel: 'Secuestro',
-    color: Color(0xff991b1b),
+    color: Color(0xff7e22ce),
     asset: 'assets/images/alert.png',
     icon: Icons.warning_amber_rounded,
     callLabel: 'Llamar a Policía (105)',
@@ -86,7 +86,7 @@ CategoryVisual categoryVisual(String type) => switch (type) {
   'violence' => const CategoryVisual(
     id: 'violence',
     shortLabel: 'Violencia',
-    color: Color(0xffbe123c),
+    color: Color(0xff7e22ce),
     asset: 'assets/images/alert.png',
     icon: Icons.report_problem_rounded,
     callLabel: 'Llamar a Policía (105)',
@@ -95,7 +95,7 @@ CategoryVisual categoryVisual(String type) => switch (type) {
   'homicide' => const CategoryVisual(
     id: 'homicide',
     shortLabel: 'Alerta grave',
-    color: Color(0xff7f1d1d),
+    color: Color(0xff7e22ce),
     asset: 'assets/images/alert.png',
     icon: Icons.emergency_rounded,
     callLabel: 'Llamar a Policía (105)',

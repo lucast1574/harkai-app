@@ -149,7 +149,7 @@ class _CommunityMapState extends State<CommunityMap> {
         MapBaseTiles(dark: Theme.of(context).brightness == Brightness.dark),
         if (widget.incidents.isNotEmpty)
           Opacity(
-            opacity: 0.55,
+            opacity: 0.72,
             child: CircleLayer(
               circles: widget.incidents.map((i) {
                 final visual = categoryVisual(i.type);
@@ -157,7 +157,7 @@ class _CommunityMapState extends State<CommunityMap> {
                   point: LatLng(i.latitude, i.longitude),
                   radius: 85,
                   useRadiusInMeter: true,
-                  color: visual.color.withValues(alpha: 0.22),
+                  color: visual.color.withValues(alpha: 0.46),
                   borderStrokeWidth: 0,
                 );
               }).toList(),
@@ -284,10 +284,10 @@ class _CommunityMapState extends State<CommunityMap> {
                           width: 26,
                           height: 26,
                           decoration: BoxDecoration(
-                            color: visual.color.withValues(alpha: 0.28),
+                            color: visual.color.withValues(alpha: 0.68),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: visual.color.withValues(alpha: 0.55),
+                              color: visual.color.withValues(alpha: 0.85),
                               width: 1,
                             ),
                           ),
@@ -295,7 +295,7 @@ class _CommunityMapState extends State<CommunityMap> {
                             child: CategoryGlyph(
                               type: i.type,
                               size: 14,
-                              color: visual.color.withValues(alpha: 0.8),
+                              color: Colors.white.withValues(alpha: 0.95),
                             ),
                           ),
                         ),
