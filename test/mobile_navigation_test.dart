@@ -20,6 +20,10 @@ void main() {
   testWidgets('Android back returns to map and root stays open', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final controller = AppController(
       ApiClient(
         transport: MockClient(
@@ -48,7 +52,7 @@ void main() {
     expect(find.text('Cuenta'), findsNothing);
     expect(
       tester.widget<NavigationBar>(find.byType(NavigationBar)).destinations,
-      hasLength(3),
+      hasLength(4),
     );
     await tester.tap(find.text('Comunidad').last);
     await tester.pump(const Duration(milliseconds: 400));

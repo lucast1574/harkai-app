@@ -14,6 +14,7 @@ import 'app_destinations.dart';
 import '../business/business_directory.dart';
 import '../business/business_point.dart';
 import '../map/map_target.dart';
+import '../community/district_chat.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -153,6 +154,7 @@ class _AppShellState extends State<AppShell> {
     ),
     4 => BusinessDirectory(own: true, onMap: showOnMap),
     5 => const ProfileScreen(),
+    6 => const DistrictChat(),
     _ => homeMap(),
   };
 
@@ -285,10 +287,11 @@ class _AppShellState extends State<AppShell> {
           selectedIndex: switch (section) {
             0 => 0,
             5 => 0,
-            4 => 2,
+            6 => 2,
+            4 => 3,
             _ => 1,
           },
-          onDestinationSelected: (index) => selectSection([0, 1, 4][index]),
+          onDestinationSelected: (index) => selectSection([0, 1, 6, 4][index]),
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.map_outlined),
@@ -299,6 +302,11 @@ class _AppShellState extends State<AppShell> {
               icon: Icon(Icons.view_agenda_outlined),
               selectedIcon: Icon(Icons.view_agenda_rounded),
               label: 'Comunidad',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.forum_outlined),
+              selectedIcon: Icon(Icons.forum_rounded),
+              label: 'Chat',
             ),
             NavigationDestination(
               icon: Icon(Icons.add_business_outlined),

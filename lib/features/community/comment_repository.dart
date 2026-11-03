@@ -38,8 +38,13 @@ class CommentPage {
 class CommentRepository {
   final ApiClient api;
   final String incidentId;
-  const CommentRepository(this.api, this.incidentId);
-  String get path => 'incidents/${Uri.encodeComponent(incidentId)}/comments';
+  final String namespace;
+  const CommentRepository(
+    this.api,
+    this.incidentId, {
+    this.namespace = 'incidents',
+  });
+  String get path => '$namespace/${Uri.encodeComponent(incidentId)}/comments';
   Future<CommentPage> list([String? cursor]) async => CommentPage.fromJson(
     await api.request(
       'GET',

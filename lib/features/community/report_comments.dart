@@ -8,7 +8,12 @@ import 'comment_tile.dart';
 
 class ReportComments extends StatefulWidget {
   final String incidentId;
-  const ReportComments({super.key, required this.incidentId});
+  final String namespace;
+  const ReportComments({
+    super.key,
+    required this.incidentId,
+    this.namespace = 'incidents',
+  });
   @override
   State<ReportComments> createState() => _ReportCommentsState();
 }
@@ -20,8 +25,11 @@ class _ReportCommentsState extends State<ReportComments> {
   String? cursor, error;
   bool initialized = false, loading = false, busy = false;
   int generation = 0;
-  CommentRepository get repository =>
-      CommentRepository(AppScope.of(context).api, widget.incidentId);
+  CommentRepository get repository => CommentRepository(
+    AppScope.of(context).api,
+    widget.incidentId,
+    namespace: widget.namespace,
+  );
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -118,7 +126,9 @@ class _ReportCommentsState extends State<ReportComments> {
         const Divider(),
         const SizedBox(height: 16),
         Text(
-          'La conversación de este reporte',
+          widget.namespace == 'forum'
+              ? 'Respuestas de vecinos'
+              : 'La conversación de este reporte',
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 8),

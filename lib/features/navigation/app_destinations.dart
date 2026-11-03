@@ -9,5 +9,6 @@ abstract final class AppDestinations {
     (Icons.location_on_outlined, 'Lugares de ayuda'),
     (Icons.storefront_outlined, 'Ponte en el mapa'),
     (Icons.person_outline, 'Mi cuenta'),
+    (Icons.forum_outlined, 'Chat del distrito'),
   ];
 }
