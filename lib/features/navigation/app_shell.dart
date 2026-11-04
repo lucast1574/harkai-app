@@ -14,7 +14,9 @@ import 'app_destinations.dart';
 import '../business/business_directory.dart';
 import '../business/business_point.dart';
 import '../map/map_target.dart';
-import '../community/district_chat.dart';
+import '../community/community_screen.dart';
+import '../pets/pets_screen.dart';
+import '../help/support_directory.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -135,26 +137,16 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget page() => switch (section) {
-    1 => ReportBrowser(
-      title: 'Reportes de la comunidad',
-      showMap: false,
-      onMapTarget: showOnMap,
+    1 || 6 => CommunityScreen(onMap: showOnMap),
+    2 => PetsScreen(
+      onMap: showOnMap,
+      onCreate: () async {
+        await create(initialType: 'pet');
+      },
     ),
-    2 => ReportBrowser(
-      title: 'Mascotas perdidas y encontradas',
-      fixedType: 'pet',
-      showMap: false,
-      onMapTarget: showOnMap,
-    ),
-    3 => ReportBrowser(
-      title: 'Lugares de ayuda y salud',
-      fixedType: 'place',
-      showMap: false,
-      onMapTarget: showOnMap,
-    ),
+    3 => SupportDirectory(onMap: showOnMap),
     4 => BusinessDirectory(own: true, onMap: showOnMap),
     5 => const ProfileScreen(),
-    6 => const DistrictChat(),
     _ => homeMap(),
   };
 
@@ -162,7 +154,7 @@ class _AppShellState extends State<AppShell> {
     mapTarget: mapTarget,
     onCloseMapTarget: () => setState(() => mapTarget = null),
     homeMode: true,
-    onOpenDrawer: openDestinations,
+    onOpenDrawer: () => selectSection(0),
     onOpenProfile: openProfileOrLogin,
     onSelectSection: selectSection,
     onCreateReport: create,
@@ -287,11 +279,12 @@ class _AppShellState extends State<AppShell> {
           selectedIndex: switch (section) {
             0 => 0,
             5 => 0,
-            6 => 2,
+            3 => 0,
+            2 => 2,
             4 => 3,
             _ => 1,
           },
-          onDestinationSelected: (index) => selectSection([0, 1, 6, 4][index]),
+          onDestinationSelected: (index) => selectSection([0, 1, 2, 4][index]),
           destinations: const [
             NavigationDestination(
               icon: Icon(Icons.map_outlined),
@@ -304,9 +297,9 @@ class _AppShellState extends State<AppShell> {
               label: 'Comunidad',
             ),
             NavigationDestination(
-              icon: Icon(Icons.forum_outlined),
-              selectedIcon: Icon(Icons.forum_rounded),
-              label: 'Chat',
+              icon: Icon(Icons.pets_outlined),
+              selectedIcon: Icon(Icons.pets_rounded),
+              label: 'Mascotas',
             ),
             NavigationDestination(
               icon: Icon(Icons.add_business_outlined),

@@ -9,6 +9,7 @@ import 'chat_district_picker.dart';
 import 'district_chat_message.dart';
 import 'district_chat_header.dart';
 import 'district_chat_composer.dart';
+import 'district_thread.dart';
 
 class DistrictChat extends StatefulWidget {
   const DistrictChat({super.key});
@@ -17,12 +18,13 @@ class DistrictChat extends StatefulWidget {
 }
 
 class _DistrictChatState extends State<DistrictChat>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   final text = TextEditingController();
   final composerFocus = FocusNode();
   List<Map<String, dynamic>> catalog = [], messages = [];
-  Map<String, dynamic>? district, replyingTo;
-  int replyRevision = 0;
+  Map<String, dynamic>? district;
   String? error, cursor;
   bool initialized = false, loading = false, sending = false, locating = false;
   int generation = 0, locationGeneration = 0;
@@ -41,7 +43,12 @@ class _DistrictChatState extends State<DistrictChat>
   void startPolling() {
     timer?.cancel();
     timer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (!loading && !sending && district != null) load(silent: true);
+      if (!loading &&
+          !sending &&
+          district != null &&
+          ModalRoute.of(context)?.isCurrent != false) {
+        load(silent: true);
+      }
     });
   }
 
@@ -112,7 +119,6 @@ class _DistrictChatState extends State<DistrictChat>
     locationGeneration++;
     setState(() {
       district = value;
-      replyingTo = null;
       text.clear();
       messages = [];
       cursor = null;
@@ -190,23 +196,17 @@ class _DistrictChatState extends State<DistrictChat>
       sending = true;
       error = null;
     });
-    final reply = replyingTo;
     try {
       final created = await AppScope.of(context).api.request(
         'POST',
-        reply == null ? 'forum' : 'forum/${reply['id']}/comments',
-        body: {
-          if (reply == null) 'district_id': district!['id'],
-          'body': text.text.trim(),
-        },
+        'forum',
+        body: {'district_id': district!['id'], 'body': text.text.trim()},
       );
       if (!mounted) return;
       generation++;
       text.clear();
       setState(() {
-        if (reply == null) messages = [created, ...messages];
-        replyingTo = null;
-        replyRevision++;
+        messages = [created, ...messages];
         loading = false;
       });
     } catch (e) {
@@ -242,9 +242,6 @@ class _DistrictChatState extends State<DistrictChat>
         context,
       ).api.request('DELETE', 'forum/${message['id']}');
       if (mounted) {
-        if (replyingTo?['id'] == message['id']) {
-          setState(() => replyingTo = null);
-        }
         await load();
       }
     } catch (e) {
@@ -254,6 +251,7 @@ class _DistrictChatState extends State<DistrictChat>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final account = AppScope.of(context).account;
     return Column(
       children: [
@@ -297,43 +295,54 @@ class _DistrictChatState extends State<DistrictChat>
                       ),
                     ),
                   if (messages.isNotEmpty)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: () async {
-                          final d = district!;
-                          await Clipboard.setData(
-                            ClipboardData(
-                              text:
-                                  'https://panel.harkai.lat/distritos/chat-${d['id']}',
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Cada mensaje abre su propia conversación.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
-                          );
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Enlace público copiado.'),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Compartir chat',
+                          icon: const Icon(Icons.link, size: 18),
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(
+                                text:
+                                    'https://panel.harkai.lat/distritos/chat-${district!['id']}',
                               ),
                             );
-                          }
-                        },
-                        icon: const Icon(Icons.link),
-                        label: const Text('Compartir chat'),
-                      ),
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Enlace público copiado.'),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ...messages.map(
                     (m) => DistrictChatMessage(
                       key: ValueKey('${m['id']}:${account?.id}'),
                       message: m,
-                      revision: replyRevision,
-                      onReply: sending
-                          ? null
-                          : () {
-                              setState(() => replyingTo = m);
-                              composerFocus.requestFocus();
-                            },
+                      onOpen: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DistrictThread(message: m),
+                        ),
+                      ),
                       onDelete: () => remove(m),
                     ),
                   ),
+                  if (messages.isNotEmpty) const Divider(height: 1),
                   if (cursor != null)
                     TextButton(
                       onPressed: loading ? null : () => load(more: true),
@@ -369,10 +378,6 @@ class _DistrictChatState extends State<DistrictChat>
                     sending: sending,
                     onChanged: () => setState(() {}),
                     onSend: send,
-                    replyBody: replyingTo?['body'] as String?,
-                    onCancelReply: sending
-                        ? null
-                        : () => setState(() => replyingTo = null),
                   ),
           ),
       ],

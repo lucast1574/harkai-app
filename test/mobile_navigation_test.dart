@@ -13,6 +13,12 @@ import 'package:harkai/core/app_scope.dart';
 import 'package:harkai/core/theme.dart';
 import 'package:harkai/features/navigation/app_shell.dart';
 import 'package:harkai/features/map/community_map.dart';
+import 'package:harkai/features/map/map_target.dart';
+import 'package:harkai/features/map/map_target_sheet.dart';
+import 'package:harkai/features/community/district_chat.dart';
+import 'package:harkai/features/help/support_directory.dart';
+import 'package:harkai/features/help/support_place.dart';
+import 'package:harkai/features/pets/pets_screen.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -48,6 +54,14 @@ void main() {
     expect(find.byType(Drawer), findsNothing);
     expect(find.text('Alertas'), findsNothing);
     expect(find.text('Negocios'), findsOneWidget);
+    expect(find.text('Chat'), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Mascotas'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byType(FloatingActionButton), findsNothing);
     expect(find.text('Cuenta'), findsNothing);
     expect(
@@ -57,9 +71,53 @@ void main() {
     await tester.tap(find.text('Comunidad').last);
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.byType(CommunityMap), findsNothing);
+    expect(find.byType(DistrictChat), findsOneWidget);
+    expect(find.text('Chat del distrito'), findsOneWidget);
     await tester.binding.handlePopRoute();
     await tester.pump();
     expect(find.byType(CommunityMap), findsOneWidget);
+    await tester.tap(find.text('Mascotas').last);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(PetsScreen), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    final helpButton = find.byTooltip('Centros de ayuda cercanos');
+    final helpStyle = tester
+        .widget<IconButton>(
+          find.byWidgetPredicate(
+            (w) => w is IconButton && w.tooltip == 'Centros de ayuda cercanos',
+          ),
+        )
+        .style!;
+    expect(helpStyle.fixedSize!.resolve({}), const Size(40, 40));
+    await tester.tap(helpButton);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(SupportDirectory), findsOneWidget);
+    expect(find.byType(CommunityMap), findsNothing);
+    const place = SupportPlace(
+      id: 'test-center',
+      name: 'Centro vecino',
+      kind: 'health_center',
+      address: 'Dirección',
+      district: 'Jesús María',
+      source: '',
+      locationSource: '',
+      reviewed: '',
+      latitude: -12.04,
+      longitude: -77.04,
+    );
+    tester
+        .widget<SupportDirectory>(find.byType(SupportDirectory))
+        .onMap(MapTarget.place(place));
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(MapTargetSheet), findsOneWidget);
+    expect(
+      tester
+          .widget<CommunityMap>(find.byType(CommunityMap))
+          .supportPlaces
+          .any((p) => p.id == place.id),
+      true,
+    );
     await tester.binding.handlePopRoute();
     await tester.pump();
     expect(find.byType(AppShell), findsOneWidget);

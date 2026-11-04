@@ -41,7 +41,7 @@ class MapLocationHeader extends StatelessWidget {
             width: 48,
             height: 48,
             child: IconButton(
-              tooltip: 'Explorar Harkai',
+              tooltip: 'Mapa de mi zona',
               onPressed: onExplore,
               padding: const EdgeInsets.all(10),
               icon: Image.asset(

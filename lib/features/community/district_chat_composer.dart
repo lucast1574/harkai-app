@@ -4,18 +4,16 @@ class DistrictChatComposer extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool sending;
-  final String? replyBody;
-  final VoidCallback? onCancelReply;
+  final bool inThread;
   final VoidCallback onSend, onChanged;
   const DistrictChatComposer({
     super.key,
     required this.controller,
     required this.focusNode,
     required this.sending,
+    this.inThread = false,
     required this.onSend,
     required this.onChanged,
-    this.replyBody,
-    this.onCancelReply,
   });
   @override
   Widget build(BuildContext context) {
@@ -23,47 +21,6 @@ class DistrictChatComposer extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (replyBody != null)
-          Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.only(left: 12),
-            decoration: BoxDecoration(
-              color: colors.surfaceContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.reply_rounded, size: 20, color: colors.primary),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Respondiendo a un vecino',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        replyBody!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Cancelar respuesta',
-                  onPressed: onCancelReply,
-                  icon: const Icon(Icons.close, size: 18),
-                ),
-              ],
-            ),
-          ),
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: Row(
@@ -74,9 +31,16 @@ class DistrictChatComposer extends StatelessWidget {
                 color: colors.primary,
               ),
               const SizedBox(width: 6),
-              Text(
-                'Como vecino anónimo',
-                style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+              Expanded(
+                child: Text(
+                  inThread
+                      ? 'Responder en este hilo'
+                      : 'Nuevo mensaje al distrito',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
               ),
             ],
           ),
@@ -94,9 +58,9 @@ class DistrictChatComposer extends StatelessWidget {
                 enabled: !sending,
                 onChanged: (_) => onChanged(),
                 decoration: InputDecoration(
-                  hintText: replyBody == null
-                      ? 'Escribe a tu barrio…'
-                      : 'Escribe tu respuesta…',
+                  hintText: inThread
+                      ? 'Escribe tu respuesta…'
+                      : 'Comparte algo con tus vecinos…',
                   counterText: '',
                   filled: true,
                   fillColor: colors.surfaceContainer,

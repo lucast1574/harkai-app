@@ -1,84 +1,93 @@
 import 'package:flutter/material.dart';
-import 'report_comments.dart';
 
-class DistrictChatMessage extends StatefulWidget {
+/// Top-level message: replies are opened on a dedicated route.
+class DistrictChatMessage extends StatelessWidget {
   final Map<String, dynamic> message;
-  final VoidCallback? onDelete, onReply;
-  final int revision;
+  final VoidCallback? onDelete, onOpen;
   const DistrictChatMessage({
     super.key,
     required this.message,
     this.onDelete,
-    this.onReply,
-    this.revision = 0,
+    this.onOpen,
   });
   @override
-  State<DistrictChatMessage> createState() => _DistrictChatMessageState();
-}
-
-class _DistrictChatMessageState extends State<DistrictChatMessage> {
-  bool replies = false;
-  @override
   Widget build(BuildContext context) {
-    final m = widget.message;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    final colors = Theme.of(context).colorScheme;
+    final date = DateTime.parse(message['created_at'] as String).toLocal();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 3),
+            child: Icon(
+              Icons.person_outline_rounded,
+              size: 22,
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.forum_outlined,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.primary,
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Vecino anónimo',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    Text(
+                      '${MaterialLocalizations.of(context).formatShortDate(date)} · ${TimeOfDay.fromDateTime(date).format(context)}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'Vecino anónimo',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
+                const SizedBox(height: 6),
+                Text(
+                  message['body'] as String,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(height: 1.45),
                 ),
-                if (m['can_delete'] == true)
-                  IconButton(
-                    tooltip: 'Retirar mensaje',
-                    onPressed: widget.onDelete,
-                    icon: const Icon(Icons.delete_outline, size: 20),
-                  ),
+                Row(
+                  children: [
+                    TextButton.icon(
+                      onPressed: onOpen,
+                      icon: const Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: 18,
+                      ),
+                      label: const Text('Ver hilo'),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        foregroundColor: colors.onSurface,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (message['can_delete'] == true)
+                      IconButton(
+                        tooltip: 'Retirar mensaje',
+                        onPressed: onDelete,
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                      ),
+                    IconButton(
+                      tooltip: 'Abrir conversación',
+                      onPressed: onOpen,
+                      icon: const Icon(Icons.chevron_right_rounded, size: 20),
+                    ),
+                  ],
+                ),
               ],
             ),
-            Text(
-              '${MaterialLocalizations.of(context).formatShortDate(DateTime.parse(m['created_at'] as String).toLocal())} · ${TimeOfDay.fromDateTime(DateTime.parse(m['created_at'] as String).toLocal()).format(context)}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            SelectableText(m['body'] as String),
-            TextButton.icon(
-              onPressed: widget.onReply == null
-                  ? null
-                  : () {
-                      setState(() => replies = true);
-                      widget.onReply!();
-                    },
-              icon: const Icon(Icons.chat_bubble_outline, size: 17),
-              label: const Text('Responder'),
-            ),
-            if (replies)
-              TextButton(
-                onPressed: () => setState(() => replies = false),
-                child: const Text('Ocultar respuestas'),
-              ),
-            if (replies)
-              ReportComments(
-                incidentId: m['id'] as String,
-                namespace: 'forum',
-                showComposer: false,
-                revision: widget.revision,
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

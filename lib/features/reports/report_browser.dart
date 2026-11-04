@@ -34,6 +34,7 @@ class ReportBrowser extends StatefulWidget {
   final VoidCallback? onCloseMapTarget;
   final ValueChanged<MapTarget>? onMapTarget;
   final bool history, alerts, showMap, homeMode;
+  final int initialRadius;
   final VoidCallback? onOpenDrawer;
   final VoidCallback? onOpenProfile;
   final ValueChanged<int>? onSelectSection;
@@ -51,6 +52,7 @@ class ReportBrowser extends StatefulWidget {
     this.alerts = false,
     this.showMap = true,
     this.homeMode = false,
+    this.initialRadius = 1000,
     this.onOpenDrawer,
     this.onOpenProfile,
     this.onSelectSection,
@@ -67,6 +69,7 @@ class _ReportBrowserState extends State<ReportBrowser> {
   void initState() {
     super.initState();
     selectedTarget = widget.mapTarget;
+    radius = widget.initialRadius;
   }
 
   @override
@@ -494,7 +497,12 @@ class _ReportBrowserState extends State<ReportBrowser> {
                   !items.any((i) => i.id == selectedTarget!.id))
                 selectedTarget!.incident!,
             ],
-            supportPlaces: supportPlaces,
+            supportPlaces: [
+              ...supportPlaces,
+              if (selectedTarget?.support != null &&
+                  !supportPlaces.any((p) => p.id == selectedTarget!.id))
+                selectedTarget!.support!,
+            ],
             businesses: businesses,
             onBackgroundTap: () {
               if (selectedTarget == null) return;
@@ -558,6 +566,23 @@ class _ReportBrowserState extends State<ReportBrowser> {
                 ),
               ),
             ),
+          ),
+        ),
+        Positioned(
+          left: 14,
+          top: MediaQuery.paddingOf(context).top + 132,
+          child: IconButton.filledTonal(
+            tooltip: 'Centros de ayuda cercanos',
+            icon: const Icon(Icons.local_hospital_outlined, size: 19),
+            style: IconButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              minimumSize: const Size(40, 40),
+              fixedSize: const Size(40, 40),
+              padding: EdgeInsets.zero,
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
+            onPressed: () => widget.onSelectSection?.call(3),
           ),
         ),
         Positioned(

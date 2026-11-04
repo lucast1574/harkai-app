@@ -5,11 +5,13 @@ class CommentTile extends StatelessWidget {
   final CommunityComment comment;
   final Future<bool> Function(String) onRemove;
   final bool busy;
+  final Widget? leading;
   const CommentTile({
     super.key,
     required this.comment,
     required this.onRemove,
     required this.busy,
+    this.leading,
   });
   @override
   Widget build(BuildContext context) => Padding(
@@ -17,7 +19,7 @@ class CommentTile extends StatelessWidget {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(radius: 17, child: Text('V')),
+        leading ?? const CircleAvatar(radius: 17, child: Text('V')),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
