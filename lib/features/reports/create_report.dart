@@ -61,12 +61,12 @@ class _CreateReportState extends State<CreateReport> {
     try {
       final result = await ReportRepository(
         AppScope.of(context).api,
-      ).analyze(draft.description.text, type: draft.type);
+      ).analyze(draft.description.text);
       if (mounted) {
         setState(() {
           analysis = result;
           if (result.suggestedType != 'place') {
-            draft.type ??= result.suggestedType;
+            draft.type = result.suggestedType;
           }
         });
       }

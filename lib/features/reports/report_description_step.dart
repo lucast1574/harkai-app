@@ -126,7 +126,7 @@ class ReportDescriptionStep extends StatelessWidget {
             disabled: busy,
             onTranscript: (text, result) {
               draft.description.text = text;
-              if (draft.type == null) onType(result.suggestedType);
+              if (result.suggestedType != 'place') onType(result.suggestedType);
             },
           ),
           const SizedBox(height: 10),

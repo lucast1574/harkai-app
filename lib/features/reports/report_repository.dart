@@ -1,6 +1,4 @@
 import 'dart:typed_data';
-import 'dart:convert';
-import 'report_categories.dart';
 import '../../core/api_client.dart';
 import '../../core/models.dart';
 
@@ -18,43 +16,6 @@ class ReportRepository {
     bool archive = false,
     DateTime? createdAfter,
   }) async {
-    if (type == 'crime') {
-      final cursors = cursor == null
-          ? null
-          : jsonDecode(utf8.decode(base64Url.decode(cursor)))
-                as Map<String, dynamic>;
-      final types = cursors == null
-          ? crimeTypes
-          : crimeTypes.where(cursors.containsKey).toList();
-      final pages = await Future.wait(
-        types.map(
-          (category) => list(
-            latitude: latitude,
-            longitude: longitude,
-            radius: radius,
-            type: category,
-            cursor: cursors?[category] as String?,
-            history: history,
-            alerts: alerts,
-            archive: archive,
-            createdAfter: createdAfter,
-          ),
-        ),
-      );
-      final next = <String, String>{};
-      final items = <Incident>[];
-      for (var index = 0; index < pages.length; index++) {
-        items.addAll(pages[index].items);
-        if (pages[index].cursor != null) {
-          next[types[index]] = pages[index].cursor!;
-        }
-      }
-      items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return ReportPage(
-        items,
-        next.isEmpty ? null : base64Url.encode(utf8.encode(jsonEncode(next))),
-      );
-    }
     final query = Uri(
       queryParameters: {
         'lat': '$latitude',

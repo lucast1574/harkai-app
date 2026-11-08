@@ -35,7 +35,7 @@ El seguimiento de alertas envía la última posición precisa (hasta 100 m y ant
 
 ## Reporte rápido
 
-Las categorías del mapa abren una sola hoja inferior con descripción, audio y GPS real. Crimen no solicita subcategorías: el backend las resuelve con sus reglas al recibir `category`. Los otros tipos requieren coincidencia entre texto y categoría. Mascotas conserva evidencia y contacto. Este flujo requiere desplegar el contrato de categorías globales del backend; los clientes anteriores conservan el contrato `type`.
+Las categorías del mapa abren una sola hoja inferior con descripción, audio y GPS real. El tipo se identifica al escribir, sin limitarlo a la categoría de entrada, y se puede corregir manualmente. La descripción tiene etiqueta fija y el teclado se cierra con «Listo», tocando fuera o al desplazar el formulario. El selector usa el catálogo del backend y «Crimen» se consulta como grupo para incluir todos sus subtipos, incluido consumo de alcohol, posible consumo de drogas en vía pública y alteración del orden público. Las respuestas de análisis atrasadas no sustituyen una descripción más reciente ni una selección manual. Mascotas conserva evidencia y contacto. Requiere el backend con identificación global y sus nuevas subcategorías.
 
 Emergencias consulta el último reporte de la cuenta y obtiene los teléfonos del directorio por su ubicación, priorizando el servicio asociado al tipo. Sin reporte usa la posición disponible; fuera de cobertura muestra líneas nacionales. Harki aparece como acceso a Ayuda. El panel principal ya no incluye el bloque redundante de alertas/salud.
 

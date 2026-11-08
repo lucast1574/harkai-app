@@ -110,6 +110,13 @@ CategoryVisual categoryVisual(String type) => switch (type) {
     callLabel: 'Llamar a Serenazgo / Ayuda',
     emergencyPhone: '105',
   ),
+  'public_drinking' || 'public_drug_use' || 'public_disorder' => CategoryVisual(
+    id: type,
+    shortLabel: 'Crimen',
+    color: const Color(0xff7e22ce),
+    icon: Icons.report_outlined,
+    callLabel: 'Llamar a Policía (105)',
+  ),
   'place' => const CategoryVisual(
     id: 'place',
     shortLabel: 'Lugares de ayuda',
