@@ -54,6 +54,7 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
         setState(() {
           final next = (page['items'] as List)
               .map((p) => BusinessPoint(p as Map<String, dynamic>))
+              .where((p) => !widget.own || p.hasAccess)
               .toList();
           items = more ? [...items, ...next] : next;
           cursor = page['next_cursor'] as String?;
@@ -66,7 +67,8 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
     }
   }
 
-  Future<void> edit([BusinessPoint? point]) async {
+  Future<void> edit(BusinessPoint point) async {
+    if (!point.hasAccess) return;
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => BusinessEditor(point: point)),
@@ -134,12 +136,12 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Cuenta qué ofreces, marca tu ubicación y envía tu negocio a revisión. Gratis por ahora, sin tarjeta.',
+            'Ingresa para ver y administrar los negocios asociados a tu cuenta.',
           ),
           const SizedBox(height: 24),
           FilledButton(
             onPressed: manageBusiness,
-            child: const Text('Ingresar y registrar mi negocio'),
+            child: const Text('Ingresar a mis negocios'),
           ),
         ],
       );
@@ -150,16 +152,14 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
         padding: const EdgeInsets.all(20),
         children: [
           Text(
-            widget.own
-                ? 'Tu negocio, cerca de los vecinos'
-                : 'Tu lugar en la comunidad',
+            widget.own ? 'Mis negocios' : 'Tu lugar en la comunidad',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
             widget.own
-                ? 'Pon tu negocio en el mapa gratis, sin tarjeta. Añade una oferta y conecta con personas cercanas.'
-                : 'Descubre negocios de tu zona o pon el tuyo en el mapa.',
+                ? 'Administra tus negocios con acceso vigente: actualiza sus datos, ofertas y disponibilidad.'
+                : 'Descubre negocios de tu zona y consulta los tuyos.',
           ),
           if (!widget.own)
             Padding(
@@ -171,22 +171,11 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
                     vertical: 8,
                   ),
                   leading: const Icon(Icons.add_business_outlined),
-                  title: const Text('Pon tu negocio en el mapa'),
-                  subtitle: const Text(
-                    'Crea y administra tu punto promocionado',
-                  ),
+                  title: const Text('Mis negocios'),
+                  subtitle: const Text('Consulta y administra tus negocios'),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: manageBusiness,
                 ),
-              ),
-            ),
-          if (widget.own)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: FilledButton.icon(
-                onPressed: () => edit(),
-                icon: const Icon(Icons.add_business_outlined),
-                label: const Text('Registrar negocio'),
               ),
             ),
           if (error != null) MessageCard(error!, error: true, onRetry: load),
@@ -200,7 +189,7 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
                     title: Text(p.name),
                     subtitle: Text(
                       widget.own
-                          ? '${businessStates[p.data['moderation']] ?? p.data['moderation']} · ${p.data['payment_mode'] == 'free' ? 'Gratis' : 'Registro anterior'}'
+                          ? '${businessStates[p.data['moderation']] ?? p.data['moderation']} · ${p.accessLabel}'
                           : '${businessKinds[p.data['kind']] ?? 'Negocio'} · Promocionado',
                     ),
                     trailing: const Icon(Icons.chevron_right),
@@ -228,7 +217,7 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
                         p.enabled ? 'Punto habilitado' : 'Punto pausado',
                       ),
                       subtitle: const Text(
-                        'Aparecerá en el mapa cuando esté aprobado y habilitado.',
+                        'Los cambios se revisan antes de mostrarse en el mapa. Puedes pausar tu negocio cuando quieras.',
                       ),
                       value: p.enabled,
                       onChanged: busy ? null : (_) => toggle(p),
@@ -239,7 +228,7 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
           if (!busy && items.isEmpty && error == null)
             MessageCard(
               widget.own
-                  ? 'Todavía no registraste un negocio.'
+                  ? 'No tienes negocios con acceso vigente asociados a esta cuenta.'
                   : 'No hay negocios promocionados en esta zona.',
             ),
           if (cursor != null)

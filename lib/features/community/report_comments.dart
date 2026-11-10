@@ -5,6 +5,7 @@ import '../../shared/widgets.dart';
 import '../auth/login_screen.dart';
 import 'comment_repository.dart';
 import 'comment_tile.dart';
+import 'comment_composer.dart';
 
 class ReportComments extends StatefulWidget {
   final String incidentId;
@@ -24,7 +25,6 @@ class ReportComments extends StatefulWidget {
 
 class _ReportCommentsState extends State<ReportComments> {
   final text = TextEditingController();
-  final form = GlobalKey<FormState>();
   List<CommunityComment> items = [];
   String? cursor, error;
   bool initialized = false, loading = false, busy = false;
@@ -87,7 +87,7 @@ class _ReportCommentsState extends State<ReportComments> {
   }
 
   Future<bool> publish() async {
-    if (!(form.currentState?.validate() ?? false)) return false;
+    if (busy || text.text.trim().length < 2) return false;
     setState(() {
       busy = true;
       error = null;
@@ -168,42 +168,27 @@ class _ReportCommentsState extends State<ReportComments> {
               child: const Text('Ingresar para comentar'),
             )
           else
-            Form(
-              key: form,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: text,
-                    minLines: 3,
-                    maxLines: 6,
-                    maxLength: 1000,
-                    decoration: const InputDecoration(
-                      labelText: 'Tu comentario',
-                      hintText: '¿Qué información puedes aportar?',
-                    ),
-                    validator: (value) => (value?.trim().length ?? 0) < 2
-                        ? 'Escribe al menos dos caracteres.'
-                        : null,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CommentComposer(
+                  controller: text,
+                  sending: busy,
+                  onSend: publish,
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Participas como vecino anónimo. Evita insultos y datos que te identifiquen.',
+                  style: TextStyle(fontSize: 12),
+                ),
+                TextButton(
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://harkai.lat/normas-comunidad/'),
+                    mode: LaunchMode.externalApplication,
                   ),
-                  const Text(
-                    'Participas como vecino anónimo. Evita insultos y datos que te identifiquen.',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  TextButton(
-                    onPressed: () => launchUrl(
-                      Uri.parse('https://harkai.lat/normas-comunidad/'),
-                      mode: LaunchMode.externalApplication,
-                    ),
-                    child: const Text('Normas de la comunidad'),
-                  ),
-                  FilledButton.icon(
-                    onPressed: busy ? null : publish,
-                    icon: const Icon(Icons.send_outlined, size: 18),
-                    label: Text(busy ? 'Publicando…' : 'Comentar'),
-                  ),
-                ],
-              ),
+                  child: const Text('Normas de la comunidad'),
+                ),
+              ],
             ),
       ],
     );

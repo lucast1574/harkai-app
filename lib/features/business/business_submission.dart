@@ -41,7 +41,7 @@ class BusinessSubmission extends StatelessWidget {
   const BusinessSubmission({super.key, required this.name});
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Negocio enviado')),
+    appBar: AppBar(title: const Text('Cambios enviados')),
     body: SafeArea(
       child: ListView(
         padding: const EdgeInsets.all(24),
@@ -52,12 +52,12 @@ class BusinessSubmission extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Ya recibimos tu negocio',
+            'Ya recibimos tus cambios',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
           const SizedBox(height: 12),
           Text(
-            '$name está en revisión. No tienes que pagar ni añadir una tarjeta.',
+            'Los cambios de $name están en revisión. Tu acceso se conserva.',
           ),
           const SizedBox(height: 24),
           const Text(

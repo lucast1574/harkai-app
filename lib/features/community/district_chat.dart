@@ -267,6 +267,8 @@ class _DistrictChatState extends State<DistrictChat>
             onRefresh: () => load(),
             child: LayoutBuilder(
               builder: (context, constraints) => ListView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [

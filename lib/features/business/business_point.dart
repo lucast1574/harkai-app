@@ -29,6 +29,13 @@ class BusinessPoint {
   String get name => data['name'] as String;
   double get latitude => (data['latitude'] as num).toDouble();
   double get longitude => (data['longitude'] as num).toDouble();
+  bool get hasAccess =>
+      data['billing_status'] == 'active' &&
+      (data['payment_mode'] == 'free' ||
+          (data['payment_mode'] == 'one_time' && data['paid_at'] != null));
+  String get accessLabel => data['payment_mode'] == 'free'
+      ? 'Acceso vigente'
+      : 'Pago único confirmado';
   bool get enabled => data['enabled'] == true;
 }
 

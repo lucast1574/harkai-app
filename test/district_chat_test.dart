@@ -145,6 +145,10 @@ void main() {
           'Nos vemos en el parque',
         );
         await tester.pump();
+        await tester.tap(find.text('Listo'));
+        await tester.pumpAndSettle();
+        expect(tester.testTextInput.isVisible, isFalse);
+        expect(find.text('Nos vemos en el parque'), findsOneWidget);
         await tester.tap(find.byTooltip('Enviar'));
         await tester.pumpAndSettle();
         expect(writes, 1);
@@ -167,6 +171,8 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Llevo una pelota'), findsNothing);
         expect(find.text('Borrador del distrito'), findsOneWidget);
+        await tester.tap(find.text('Listo'));
+        await tester.pumpAndSettle();
         expect(find.text('Nuevo mensaje al distrito'), findsOneWidget);
       } else {
         expect(find.text('Ingresar para conversar'), findsOneWidget);

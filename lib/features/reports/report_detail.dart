@@ -141,6 +141,7 @@ class _ReportDetailState extends State<ReportDetail> {
       top: !widget.embedded,
       bottom: !widget.embedded,
       child: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         controller: widget.scrollController,
         padding: EdgeInsets.fromLTRB(20, widget.embedded ? 8 : 20, 20, 40),
         children: [

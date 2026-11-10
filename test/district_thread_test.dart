@@ -104,6 +104,14 @@ void main() {
           expect(find.text('Por mi cuadra todavía no.'), findsOneWidget);
           await tester.enterText(find.byType(TextField), 'Gracias por avisar');
           await tester.pump();
+          await tester.tap(find.text('Listo'));
+          await tester.pumpAndSettle();
+          expect(tester.testTextInput.isVisible, isFalse);
+          await tester.tap(find.byType(TextField));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Mensaje original'));
+          await tester.pumpAndSettle();
+          expect(tester.testTextInput.isVisible, isFalse);
           await tester.tap(find.byTooltip('Enviar'));
           await tester.pumpAndSettle();
           expect(find.text('Gracias por avisar'), findsOneWidget);

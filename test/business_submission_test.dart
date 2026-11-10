@@ -14,6 +14,7 @@ import 'package:harkai/core/app_scope.dart';
 import 'package:harkai/core/theme.dart';
 import 'package:harkai/features/business/business_editor.dart';
 import 'package:harkai/features/business/business_point.dart';
+import 'quick_report_sheet_test.dart' show captureForm;
 
 void main() {
   testWidgets('offer and details save together, errors preserve the draft', (
@@ -97,26 +98,34 @@ void main() {
     }
     await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Continuar'));
-    await tester.pumpAndSettle();
+    if (Platform.environment['BUSINESS_CAPTURE'] == '1') {
+      await captureForm(tester, key, 'business-optional-details');
+    }
     await tester.enterText(
-      find.byType(TextFormField).first,
+      find.byKey(const ValueKey('business-offer')),
       '15 % en tu primera visita',
     );
-    await tester.enterText(find.byType(TextFormField).last, 'vecinos15');
+    await tester.enterText(
+      find.byKey(const ValueKey('business-discount_code')),
+      'vecinos15',
+    );
     tester.testTextInput.hide();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Enviar a revisión gratis'));
+    await tester.tap(find.text('Continuar'));
     await tester.pumpAndSettle();
-    expect(find.text('15 % en tu primera visita'), findsOneWidget);
-    expect(find.text('Enviar a revisión gratis'), findsOneWidget);
-    await tester.tap(find.text('Enviar a revisión gratis'));
+    await tester.tap(find.text('Continuar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Guardar cambios'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('15 % en tu primera visita'), findsOneWidget);
+    expect(find.text('Guardar cambios'), findsOneWidget);
+    await tester.tap(find.text('Guardar cambios'));
     await tester.pumpAndSettle();
     expect(payloads, hasLength(2));
     expect(payloads.last['name'], 'Café del barrio');
     expect(payloads.last['offer'], '15 % en tu primera visita');
     expect(payloads.last['discount_code'], 'VECINOS15');
-    expect(find.text('Ya recibimos tu negocio'), findsOneWidget);
+    expect(find.text('Ya recibimos tus cambios'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

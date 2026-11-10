@@ -7,7 +7,7 @@ abstract final class AppDestinations {
     (Icons.view_agenda_outlined, 'Comunidad'),
     (Icons.pets_outlined, 'Mascotas'),
     (Icons.local_hospital_outlined, 'Centros de ayuda'),
-    (Icons.storefront_outlined, 'Ponte en el mapa'),
+    (Icons.storefront_outlined, 'Negocios'),
     (Icons.person_outline, 'Mi cuenta'),
     (Icons.forum_outlined, 'Chat del distrito'),
   ];
