@@ -161,9 +161,10 @@ class _BusinessDirectoryState extends State<BusinessDirectory> {
                 ? 'Administra tus negocios con acceso vigente: actualiza sus datos, ofertas y disponibilidad.'
                 : 'Descubre negocios de tu zona y consulta los tuyos.',
           ),
+          const SizedBox(height: 16),
           if (!widget.own)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.only(bottom: 16),
               child: Card(
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(

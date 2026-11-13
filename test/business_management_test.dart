@@ -85,6 +85,15 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('pagado'), findsOneWidget);
       expect(find.text('anterior'), findsOneWidget);
+      final subtitleBottom = tester
+          .getRect(
+            find.text(
+              'Administra tus negocios con acceso vigente: actualiza sus datos, ofertas y disponibilidad.',
+            ),
+          )
+          .bottom;
+      final firstCardTop = tester.getRect(find.byType(Card).first).top;
+      expect(firstCardTop - subtitleBottom, greaterThanOrEqualTo(16));
       expect(find.text('sin pagar'), findsNothing);
       expect(find.text('reembolsado'), findsNothing);
       expect(find.text('Registrar negocio'), findsNothing);
