@@ -35,6 +35,8 @@ El seguimiento de alertas envía la última posición precisa (hasta 100 m y ant
 
 ## Reporte rápido
 
+Desde Mascotas, el formulario ya selecciona «Mascota perdida o encontrada» y envía esa elección explícita, sin depender de que el clasificador reconozca nombres, razas o expresiones particulares. El tipo sigue siendo editable. «Mostrar mi teléfono» es opcional y está desactivado inicialmente; al activarlo aparece un campo validado de 9 a 15 dígitos con formatos como `+51 (987) 654-321`. El teléfono se normaliza antes del envío y se omite si no se autoriza compartirlo.
+
 Las categorías del mapa abren una sola hoja inferior con descripción, audio y GPS real. El tipo se identifica al escribir, sin limitarlo a la categoría de entrada, y se puede corregir manualmente. La descripción tiene etiqueta fija y el teclado se cierra con «Listo», tocando fuera o al desplazar el formulario. El selector usa el catálogo del backend y «Crimen» se consulta como grupo para incluir todos sus subtipos, incluido consumo de alcohol, posible consumo de drogas en vía pública y alteración del orden público. Las respuestas de análisis atrasadas no sustituyen una descripción más reciente ni una selección manual. Mascotas conserva evidencia y contacto. Requiere el backend con identificación global y sus nuevas subcategorías.
 
 Emergencias consulta el último reporte de la cuenta y obtiene los teléfonos del directorio por su ubicación, priorizando el servicio asociado al tipo. Sin reporte usa la posición disponible; fuera de cobertura muestra líneas nacionales. Harki aparece como acceso a Ayuda. El panel principal ya no incluye el bloque redundante de alertas/salud.

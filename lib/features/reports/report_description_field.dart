@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 class ReportDescriptionField extends StatelessWidget {
   final TextEditingController controller;
   final bool enabled;
+  final bool pet;
   const ReportDescriptionField({
     super.key,
     required this.controller,
     required this.enabled,
+    this.pet = false,
   });
 
   @override
@@ -15,7 +17,10 @@ class ReportDescriptionField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('¿Qué ocurrió?', style: theme.textTheme.titleSmall),
+        Text(
+          pet ? 'Cuéntanos sobre el animal' : '¿Qué ocurrió?',
+          style: theme.textTheme.titleSmall,
+        ),
         const SizedBox(height: 12),
         TextFormField(
           controller: controller,
@@ -32,7 +37,9 @@ class ReportDescriptionField extends StatelessWidget {
             height: 1.5,
           ),
           decoration: InputDecoration(
-            hintText: 'Describe lo que viste y hace cuánto pasó.',
+            hintText: pet
+                ? 'Ej. Busco a Luna, es pequeña, de pelo blanco y lleva collar rojo. Se perdió esta mañana cerca del parque.'
+                : 'Describe lo que viste y hace cuánto pasó.',
             hintStyle: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w400,

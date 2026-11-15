@@ -12,6 +12,7 @@ import 'report_categories.dart';
 import 'report_classifier.dart';
 import 'report_description_field.dart';
 import 'report_type_field.dart';
+import 'report_contact_field.dart';
 
 class QuickReportSheet extends StatefulWidget {
   final String category;
@@ -42,6 +43,9 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
       _classifier = ReportClassifier(
         ReportRepository(AppScope.of(context).api),
       );
+      // Publishing from pets is an explicit choice, even if the description
+      // uses a name, a breed or wording the automatic rules do not recognize.
+      if (widget.category == 'pet') _classifier!.selectType('pet');
       _classifier!.addListener(refreshClassification);
       text.addListener(descriptionChanged);
     }
@@ -144,6 +148,13 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
         );
         return false;
       }
+      if (pet && share) {
+        final contactError = reportContactValidator(contact.text);
+        if (contactError != null) {
+          setState(() => error = contactError);
+          return false;
+        }
+      }
       // Refresh the GPS only after the report is ready to publish.
       if (!await locate() || !mounted || app.account?.id != owner) return false;
       final report = await ReportRepository(app.api).create({
@@ -155,7 +166,7 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
         'longitude': position!.longitude,
         'country': 'PE',
         if (mediaId != null) 'media_id': mediaId,
-        if (pet) 'contact_info': contact.text.trim(),
+        if (pet && share) 'contact_info': normalizedReportContact(contact.text),
         'share_contact': pet && share,
       });
       if (mounted && app.account?.id == owner) Navigator.pop(context, report);
@@ -220,7 +231,9 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Describe la situación para alertar a tu comunidad.',
+                            pet
+                                ? 'Cuenta si se perdió o lo encontraste, sus rasgos y cuándo lo viste.'
+                                : 'Describe la situación para alertar a tu comunidad.',
                             style: TextStyle(
                               color: colors.onSurfaceVariant,
                               fontSize: 14,
@@ -232,6 +245,7 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
                           ReportDescriptionField(
                             controller: text,
                             enabled: !busy && !voiceBusy,
+                            pet: pet,
                           ),
                           const SizedBox(height: 24),
                           ReportTypeField(
@@ -261,7 +275,9 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
                                 ? 'Añadir una foto'
                                 : 'Foto adjunta',
                             subtitle: mediaId == null
-                                ? 'Opcional · muestra lo que está pasando.'
+                                ? pet
+                                      ? 'Opcional · ayuda a reconocer al animal.'
+                                      : 'Opcional · muestra lo que está pasando.'
                                 : 'Lista para publicar. Toca para cambiarla.',
                             busy: photoBusy,
                             onTap: busy || voiceBusy
@@ -318,35 +334,18 @@ class _QuickReportSheetState extends State<QuickReportSheet> {
                               ],
                             ),
                           ),
-                          ...[
-                            const SizedBox(height: 12),
-                            if (pet)
-                              TextFormField(
-                                controller: contact,
-                                enabled: !busy,
-                                decoration: const InputDecoration(
-                                  labelText: 'Contacto opcional para ayudar',
-                                ),
-                                validator: (value) =>
-                                    (value?.trim().isNotEmpty ?? false) &&
-                                        (value?.trim().length ?? 0) < 6
-                                    ? 'Añade un contacto de al menos 6 caracteres.'
-                                    : null,
-                              ),
-                            if (pet)
-                              CheckboxListTile(
-                                contentPadding: EdgeInsets.zero,
-                                value: share,
-                                onChanged: busy
-                                    ? null
-                                    : (value) => setState(
-                                        () => share = value ?? false,
-                                      ),
-                                title: const Text(
-                                  'Acepto mostrar este contacto en mi reporte',
-                                  style: TextStyle(fontSize: 12),
-                                ),
-                              ),
+                          if (pet) ...[
+                            const SizedBox(height: 24),
+                            ReportContactField(
+                              controller: contact,
+                              share: share,
+                              enabled: !busy && !voiceBusy,
+                              onShare: (value) => setState(() {
+                                share = value;
+                                error = null;
+                              }),
+                            ),
+                            const SizedBox(height: 24),
                           ],
                           if (error != null) MessageCard(error!, error: true),
                           const SizedBox(height: 16),
